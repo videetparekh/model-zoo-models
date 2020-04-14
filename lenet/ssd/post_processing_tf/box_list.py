@@ -34,7 +34,7 @@ Some other notes:
   * Tensors are always provided as (flat) [N, 4] tensors.
 """
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from ssd.post_processing_tf import shape_utils
 

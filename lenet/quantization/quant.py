@@ -1,5 +1,5 @@
 # this file is in the core branch
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 # NOTE all classes in this file currently
 # assume that the input tensors

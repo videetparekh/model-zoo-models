@@ -20,7 +20,7 @@ from __future__ import division
 from __future__ import print_function
 
 from six.moves import zip
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from ssd.post_processing_tf import static_shape
 import numpy as np

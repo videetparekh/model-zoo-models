@@ -1,7 +1,7 @@
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 import keras
 import keras.layers
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 momentum_default = 0.99
 epsilon_default = 1e-3

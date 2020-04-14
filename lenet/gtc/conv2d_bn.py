@@ -1,4 +1,4 @@
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.python.ops import init_ops
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 from collections import OrderedDict
@@ -305,7 +305,7 @@ class Conv2d_bn(GTCLayer):
 
         x = self._conv_op(
             inputs,
-            filter=weights,
+            filters=weights,
             strides=[1, self._strides[0], self._strides[1], 1],
             padding=self._padding)
         if self._use_bias or (self._batch_normalizer_hp.center and fused):

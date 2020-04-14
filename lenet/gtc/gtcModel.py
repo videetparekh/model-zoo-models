@@ -1,7 +1,7 @@
 # this file is in the core branch
 import sys 
 sys.path.append('../')
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import gtc
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 import quantization as quant
@@ -233,19 +233,18 @@ class GTCModel:
                 elif len(lyr_ip_vars) == 1:
                     self._forward_prop_inputs[lyr] = lyr_ip_vars[0]
 
-                    # print('---in compile input',
-                    #      self._forward_prop_inputs[lyr])
-                    # print('--layer obj',
-                    #      self._layers_objects[lyr]['layer_obj'])
-                    # print('--all layer ops', self._forward_prop_outputs)
+                    print('---in compile input',
+                        self._forward_prop_inputs[lyr])
+                    print('--layer obj',
+                        self._layers_objects[lyr]['layer_obj'])
+                    print('--all layer ops', self._forward_prop_outputs)
                     batchnorm_training_kwargs = {}
                     #Using a 'training' flag for dynamic training/testing does not work, just 
                     # like using the keras learning_phase()
                     #if isinstance(lyr_obj, gtc.BatchNormalization):
                     #    batchnorm_training_kwargs = dict(training=self._learning_phase)
 
-                    self._forward_prop_outputs[lyr] = lyr_obj(self._forward_prop_inputs[lyr],
-                                                              **batchnorm_training_kwargs)
+                    self._forward_prop_outputs[lyr] = lyr_obj(self._forward_prop_inputs[lyr],**batchnorm_training_kwargs)
                 elif len(lyr_ip_vars) > 1:
                     # Handle layers with multiple inputs (e.g. Concatenate(), Add())
                     if all(["gtc_tag" in lip for lip in lyr_ip_vars]):

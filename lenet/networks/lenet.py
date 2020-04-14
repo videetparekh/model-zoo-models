@@ -4,7 +4,7 @@ import keras
 #from mnist.config import config
 from quantization import quant_utils as quant_utl
 from networks import net_utils as net
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import os
 from keras.datasets import mnist
 import numpy as np
@@ -252,14 +252,11 @@ def main():
 
         keras_model_hp = gtc.singlePrecisionKerasModel(
             model_file=model_file, weights_file=weights_file_hp, hp=True, verbose=True)
-        saver = tf.train.Saver()
-        model = keras_model_hp
-        sess1 = keras.backend.get_session()
-        save_path = saver.save(sess1,_BASEDIR + 'bitnet/test/HP/hpmodel.ckpt')
+        keras_model_hp.save(_BASEDIR + 'bitnet/test/hpmodel.hp')
 
         keras_model_lp = gtc.singlePrecisionKerasModel(
             model_file=model_file, weights_file=weights_file_lp, hp=False)
-        keras_model_lp.save(_BASEDIR + 'bitnet/test/LP/lpmodel')
+        keras_model_lp.save(_BASEDIR + 'bitnet/test/lpmodel.hp')
 
 
 if __name__ == "__main__":

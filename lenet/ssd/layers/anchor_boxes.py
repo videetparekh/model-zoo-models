@@ -23,7 +23,7 @@ import keras.backend as K
 #from keras.engine.topology import InputSpec
 #from keras.engine.topology import Layer
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from ssd import ssd_utils as ssd_utl
 import keras
 

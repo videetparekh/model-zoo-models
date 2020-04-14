@@ -1,5 +1,5 @@
 from quantization.quant import Quantization
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 num_bits_initial_default = 8.0
 

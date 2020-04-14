@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import division
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from scipy.special import softmax, expit as sigmoid
 import time
 #from tqdm import tqdm

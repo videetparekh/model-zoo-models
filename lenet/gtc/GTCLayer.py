@@ -1,10 +1,12 @@
 # this file is in the core branch
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.python.keras.layers import InputSpec
 import quantization as quant
 from collections import OrderedDict
+import keras
 
 class GTCLayer(tf.keras.layers.Layer):
+#class GTCLayer(keras.layers.Layer):
     """
     Abstract layer for GTC layers
     """

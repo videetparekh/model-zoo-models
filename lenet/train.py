@@ -1,10 +1,15 @@
 import os
+import tensorflow.compat.v1 as tf
+
+tf.compat.v1.disable_v2_behavior()
+tf.compat.v1.disable_eager_execution()
+
 import keras
 keras.backend.set_learning_phase(True)
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, CSVLogger, LearningRateScheduler
 
 from networks import net_utils as net
-import tensorflow.compat.v1 as tf
+
 from dataset_loaders import GetGTCDatasetLoader, DatasetInfo
 
 import networks

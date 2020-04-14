@@ -1,5 +1,5 @@
 from quantization.quant import Quantization
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 default_intercept = 0.0001
 default_slope = 1.0

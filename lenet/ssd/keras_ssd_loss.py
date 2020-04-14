@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from __future__ import division
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.python.ops import array_ops
 import keras
 import ssd.ssd_utils as ssd_utl

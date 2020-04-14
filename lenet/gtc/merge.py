@@ -1,5 +1,5 @@
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import keras.layers
 from functools import partial
 

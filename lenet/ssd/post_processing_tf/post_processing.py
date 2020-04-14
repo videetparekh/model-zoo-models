@@ -22,7 +22,7 @@ import collections
 import numpy as np
 from six.moves import range
 from six.moves import zip
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from ssd.post_processing_tf import box_list, standard_fields as fields, box_list_ops, shape_utils
 

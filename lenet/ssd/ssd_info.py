@@ -1,4 +1,4 @@
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from collections import namedtuple
 from utility_scripts import misc_utl as utl
 #from networks.net_types import SSDNetType

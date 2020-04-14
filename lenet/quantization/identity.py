@@ -1,5 +1,5 @@
 from quantization.quant import Quantization
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 class IdentityQuantization(Quantization):
     """Trivial quantization --- used to implement tf layers in gtc"""

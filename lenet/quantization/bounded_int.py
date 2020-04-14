@@ -1,5 +1,5 @@
 from quantization.quant import Quantization
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 _default_intercept_bnd_int=0.0001  # default initialization value
 _default_scale_bnd_int=0.1         # default initialization value

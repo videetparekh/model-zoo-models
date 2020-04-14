@@ -20,7 +20,7 @@ Generates grid anchors on the fly as described in:
 Shaoqing Ren, Kaiming He, Ross Girshick, and Jian Sun.
 """
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from ssd.anchor_boxes_tf import anchor_generator
 from ssd.post_processing_tf import box_list, objdet_util_ops as ops

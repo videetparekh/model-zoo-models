@@ -15,7 +15,7 @@ import ssd.post_processing_tf.visualization_utils as vis_util
 import datasets
 from utility_scripts.sample_image_loader import SampleImageLoader
 from utility_scripts import misc_utl as utl
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import keras
 import shutil
 

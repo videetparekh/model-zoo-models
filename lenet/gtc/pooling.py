@@ -1,4 +1,4 @@
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from gtc.kerasLayer import GTCKerasLayer
 import keras
 from functools import partial

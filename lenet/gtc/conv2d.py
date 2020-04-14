@@ -1,4 +1,4 @@
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.python.ops import init_ops
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 import quantization as quant
@@ -212,7 +212,7 @@ class Conv2d(GTCLayer):
 
         x = self._conv_op(
             inputs,
-            filter=weights,
+            filters=weights,
             strides=[1, self._strides[0], self._strides[1], 1],
             padding=self._padding,
             **self._dilation_kwargs)

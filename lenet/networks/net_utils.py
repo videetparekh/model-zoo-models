@@ -2,7 +2,7 @@ import gtc
 import quantization
 from utility_scripts import misc_utl as utl
 from collections import namedtuple, OrderedDict
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import os
 import shutil
 import imageio
