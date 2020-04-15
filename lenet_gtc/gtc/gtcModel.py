@@ -9,20 +9,19 @@ from collections import OrderedDict
 import numpy as np
 import shutil
 import os
-import keras
+import tensorflow.keras as keras
 from tabulate import tabulate
 from utility_scripts import misc_utl as utl
 import h5py
 #from networks.net_utils import
 #import networks.net_utils as net
 import networks.net_utils_core as net
-import keras.backend as K
+import tensorflow.keras.backend as K
 import scipy.stats
 from utility_scripts import weights_readers
 import time
 import json
 import warnings
-
 
 class GTCModel:
     def __init__(
@@ -233,11 +232,14 @@ class GTCModel:
                 elif len(lyr_ip_vars) == 1:
                     self._forward_prop_inputs[lyr] = lyr_ip_vars[0]
 
+                    print('---- lyr  : ', lyr)
+                    print ('----lyr_obj :  ', lyr_obj)
+                    print ('----lyr_obj dictionary   :', lyr_obj.__dict__.keys())
                     print('---in compile input',
                         self._forward_prop_inputs[lyr])
-                    print('--layer obj',
-                        self._layers_objects[lyr]['layer_obj'])
-                    print('--all layer ops', self._forward_prop_outputs)
+                    #print ('----_keras_layer = ', lyr_obj._keras_layer)
+                    print('--all layer ops', 
+                        self._forward_prop_outputs)
                     batchnorm_training_kwargs = {}
                     #Using a 'training' flag for dynamic training/testing does not work, just 
                     # like using the keras learning_phase()

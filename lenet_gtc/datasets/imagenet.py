@@ -9,7 +9,7 @@ from utility_scripts import misc_utl as utl
 import networks.net_utils_core as net
 from datasets.dataset_loaders import DatasetLoader
 from datasets.dataset_loaders import GTCBaseImageDataGenerator
-import keras
+import tensorflow.keras as keras
 import platform
 import warnings
 from collections import OrderedDict

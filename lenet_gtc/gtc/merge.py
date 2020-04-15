@@ -1,6 +1,6 @@
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 import tensorflow.compat.v1 as tf
-import keras.layers
+import tensorflow.keras.layers
 from functools import partial
 
 use_functional_API = True

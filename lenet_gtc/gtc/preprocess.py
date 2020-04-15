@@ -1,8 +1,8 @@
 from gtc.kerasLayer import GTCKerasLayer
-import keras.layers
+import tensorflow.keras.layers
 import tensorflow.compat.v1 as tf
 import numpy as np
-
+import tensorflow.keras as keras
 
 
 

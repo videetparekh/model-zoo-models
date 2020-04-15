@@ -2,8 +2,9 @@ import tensorflow.compat.v1 as tf
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 from collections import OrderedDict
 from tensorflow.python.ops import init_ops
-import keras.layers
-import keras.backend as K
+import tensorflow.keras.layers
+import tensorflow.keras.backend as K
+import tensorflow.keras as keras
 
 class Dense(GTCLayer):
     """

@@ -3,10 +3,10 @@ import tensorflow.compat.v1 as tf
 from tensorflow.python.ops import init_ops
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 from collections import OrderedDict
-import keras
-import keras.layers
+import tensorflow.keras as keras
+import tensorflow.keras.layers
 
-import keras.backend as K 
+import tensorflow.keras.backend as K 
 class Dense_bn(GTCLayer):
     """
     Implements fused conv2d + batch norm GTC layer

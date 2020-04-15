@@ -1,5 +1,6 @@
 import tensorflow.compat.v1 as tf
-from tensorflow.python.keras import backend as K
+#from tensorflow.python.keras import backend as K
+from tensorflow.keras import backend as K
 from collections import OrderedDict
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 

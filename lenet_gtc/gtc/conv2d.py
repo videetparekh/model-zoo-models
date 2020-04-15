@@ -3,9 +3,9 @@ from tensorflow.python.ops import init_ops
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 import quantization as quant
 from collections import OrderedDict
-import keras.layers
+import tensorflow.keras.layers
 import numpy as np
-
+import tensorflow.keras as keras
 useZeroBiasIfUseBiasFalse = False   # some conv layers skip the bias term if followed by a batchnorm layer.
 
 class Conv2d(GTCLayer):

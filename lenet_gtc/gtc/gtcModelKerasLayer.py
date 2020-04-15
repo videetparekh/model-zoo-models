@@ -1,5 +1,5 @@
 import tensorflow.compat.v1 as tf
-import keras
+import tensorflow.keras as keras
 
 
 class GTCModelKerasLayer(keras.layers.Layer):

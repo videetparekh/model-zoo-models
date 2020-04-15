@@ -1,7 +1,7 @@
 from gtc.kerasLayer import GTCKerasLayer
-import keras.layers
+import tensorflow.keras.layers
 import tensorflow.compat.v1 as tf
-import keras.backend as K
+import tensorflow.keras.backend as K
 
 
 class Resize(GTCKerasLayer):
@@ -19,7 +19,7 @@ class Resize(GTCKerasLayer):
 # Pure Keras version of Resize
 # For using in building single-precision keras models from gtcModels
 
-class keras_Resize(keras.layers.Layer):
+class keras_Resize(tensorflow.keras.layers.Layer):
     # Keras layer that does resizing (for building with a pure-keras model),
     # that mirrors the job that the Resize(GTCKerasLayer) does for a GTCModel.
 

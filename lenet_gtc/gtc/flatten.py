@@ -1,7 +1,7 @@
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 import numpy as np
-import keras
-from keras import backend as K
+import tensorflow.keras as keras
+from tensorflow.keras import backend as K
 
 
 class Flatten(GTCLayer):

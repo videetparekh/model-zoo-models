@@ -1,12 +1,12 @@
 import gtc
-import keras
+import tensorflow.keras as keras
 
 #from mnist.config import config
 from quantization import quant_utils as quant_utl
 from networks import net_utils as net
 import tensorflow.compat.v1 as tf
 import os
-from keras.datasets import mnist
+from tensorflow.keras.datasets import mnist
 import numpy as np
 
 tf.compat.v1.disable_eager_execution()

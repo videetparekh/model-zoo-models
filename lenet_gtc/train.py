@@ -4,7 +4,7 @@ import tensorflow.compat.v1 as tf
 tf.compat.v1.disable_v2_behavior()
 tf.compat.v1.disable_eager_execution()
 
-import keras
+import tensorflow.keras as keras
 keras.backend.set_learning_phase(True)
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, CSVLogger, LearningRateScheduler
 

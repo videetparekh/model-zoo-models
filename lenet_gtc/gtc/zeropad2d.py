@@ -1,6 +1,6 @@
 from gtc.kerasLayer import GTCKerasLayer
 from gtc.GTCLayer import GTCLayer, unpackGTCDict, GTCDict
-import keras.layers
+import tensorflow.keras.layers
 
 class ZeroPadding2D(GTCLayer):
 

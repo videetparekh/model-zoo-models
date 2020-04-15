@@ -1,6 +1,6 @@
 import tensorflow.compat.v1 as tf
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
-import keras
+import tensorflow.keras as keras
 import numpy as np
 
 

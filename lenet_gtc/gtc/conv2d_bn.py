@@ -2,8 +2,8 @@ import tensorflow.compat.v1 as tf
 from tensorflow.python.ops import init_ops
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 from collections import OrderedDict
-import keras
-import keras.layers
+import tensorflow.keras as keras
+import tensorflow.keras.layers
 
 class Conv2d_bn(GTCLayer):
     """

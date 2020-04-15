@@ -1,5 +1,5 @@
 from gtc.kerasLayer import GTCKerasLayer
-import keras.layers
+import tensorflow.keras.layers
 
 class Softmax(GTCKerasLayer):
     def __init__(self, axis=-1, name=None, quantizer=None, **kwargs):

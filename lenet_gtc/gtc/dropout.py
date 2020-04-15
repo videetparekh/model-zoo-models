@@ -1,12 +1,12 @@
 import tensorflow.compat.v1 as tf
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 from collections import OrderedDict
-from tensorflow.python.keras import backend as K
+from tensorflow.keras import backend as K
 from tensorflow.python.ops import array_ops
 from tensorflow.python.keras.utils import tf_utils
 from tensorflow.python.ops import nn_ops
 import math
-import keras
+import tensorflow.keras as keras
 
 if tf.__version__ == '1.12.0':
     use_keep_prob = True

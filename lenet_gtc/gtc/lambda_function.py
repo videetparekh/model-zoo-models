@@ -1,5 +1,5 @@
 from gtc.kerasLayer import GTCKerasLayer
-import keras.layers
+import tensorflow.keras.layers
 
 # Note: cannot name this file lambda.py
 

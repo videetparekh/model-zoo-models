@@ -6,7 +6,7 @@ import tensorflow.compat.v1 as tf
 import os
 import shutil
 import imageio
-import keras
+import tensorflow.keras as keras
 import time
 import wget
 import numpy as np
@@ -26,7 +26,7 @@ import csv
 import classification_models.weights
 import classification_models.keras
 import re
-import keras.backend as K
+import tensorflow.keras.backend as K
 from google_drive_downloader import GoogleDriveDownloader
 import h5py
 import keras.engine.saving
@@ -96,7 +96,7 @@ def GetNetwork(net_type):
         raise ValueError('Unrecognized network type')
 
 
-import keras.layers as krs
+import tensorflow.keras.layers as krs
 
 def add_conv_bn_act_layers(model, filters=None, kernel_size=None, stride=1,
                            explicit_zero_prepadding=False, do_batchnorm=None,

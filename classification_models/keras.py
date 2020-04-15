@@ -1,4 +1,4 @@
-import keras
+import tensorflow.keras as keras
 from .models_factory import ModelsFactory
 
 
