@@ -246,36 +246,7 @@ def main(_BASEDIR, args):
         # keras_model.load_weights(final_weights_file)
 
 
-    # Once trained, you can
-    evaluate_on_test_dataset_again = False
-    if evaluate_on_test_dataset_again and make_GTC_model:
-
-        # evaluate on a single example
-        test_dataLoader = datagen_test.flow(batch_size=1)
-        num_samples_test = 3
-        for j in range(num_samples_test):
-            x,y = test_dataLoader[j]
-            y_gt_label = int( np.argmax( y[0] ) )
-
-            # for the keras_model wrapper, the predict() function calculates
-            # both outputs (hp and lp), concatenated in a list
-            y_pred = keras_model.predict(x)
-            y_pred_hp, y_pred_lp = y_pred[0], y_pred[1]
-
-            # You can also use the 'predict' method of the underlying gtcModel.
-            # This accepts an argument 'hp', if hp=True, it uses the high-precision branch
-            # if hp=False, it uses the low-precision branch.
-            y_pred_hp2 = gtc_model.predict(x, hp=True)
-            y_pred_lp2 = gtc_model.predict(x, hp=False)
-
-            y_pred_label_hp = int(np.argmax(y_pred_hp))
-            y_pred_label_lp = int(np.argmax(y_pred_lp))
-
-            assert np.allclose(y_pred_hp, y_pred_hp2)
-            assert np.allclose(y_pred_lp, y_pred_lp2)
-            print('Sample %d' % (j+1))
-            print(' Actual GT label:      %d. \n Predicted label (hp): %d. \n Predicted label (lp): %d\n' % (
-                y_gt_label, y_pred_label_hp, y_pred_label_lp) )
+    
 
 
 
