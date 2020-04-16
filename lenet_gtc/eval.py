@@ -10,7 +10,7 @@ import tensorflow.compat.v1 as tf
 import gtc
 from networks import net_utils as net
 import numpy as np
-from dataset_loaders import GetGTCDatasetLoader, DatasetInfo
+from datasets.dataset_loaders import GetGTCDatasetLoader, DatasetInfo
 from tensorflow.keras.datasets import mnist
 
 tf.compat.v1.disable_v2_behavior()

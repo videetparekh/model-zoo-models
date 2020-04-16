@@ -1,9 +1,9 @@
-import keras
+import tensorflow.keras as keras
 import os
 import time
 import numpy as np
 
-import keras.backend as K
+import tensorflow.keras.backend as K
 import warnings
 from collections import OrderedDict
 from colorama import Fore

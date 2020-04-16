@@ -1,6 +1,6 @@
 import tensorflow.compat.v1 as tf
 from tensorflow.python import pywrap_tensorflow
-import keras
+import tensorflow.keras as keras
 import scipy.io
 
 import numpy as np

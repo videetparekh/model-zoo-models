@@ -1,6 +1,6 @@
 from gtc.GTCLayer import GTCLayer, GTCDict, unpackGTCDict
 import tensorflow.keras as keras
-import keras.layers
+import tensorflow.keras.layers
 import tensorflow.compat.v1 as tf
 
 momentum_default = 0.99
@@ -73,10 +73,10 @@ class BatchNormalization(GTCLayer):
         self.center = center
         self.scale = scale
 
-        self._batch_normalizer_hp = keras.layers.normalization.BatchNormalization(
+        self._batch_normalizer_hp = keras.layers.BatchNormalization(
             **bn_args, name='bnorm_hp' )
 
-        self._batch_normalizer_lp = keras.layers.normalization.BatchNormalization(
+        self._batch_normalizer_lp = keras.layers.BatchNormalization(
             **bn_args, name='bnorm_lp')
 
 

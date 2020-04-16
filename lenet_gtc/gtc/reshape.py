@@ -1,5 +1,5 @@
 from gtc.GTCLayer import GTCDict, unpackGTCDict, GTCLayer
-import keras.layers
+import tensorflow.keras.layers
 import tensorflow.keras.backend as K
 
 class Reshape(GTCLayer):
