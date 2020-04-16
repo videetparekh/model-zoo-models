@@ -1,15 +1,15 @@
 import sys
 sys.path.append("/home/manish/MobileNet-ssd-keras")
-import keras
+import tensorflow.keras as keras
 import numpy as np 
 import cv2
-import keras.backend as K
-import keras.layers as KL
+import tensorflow.keras.backend as K
+import tensorflow.keras.layers as KL
 #from models.depthwise_conv2d import DepthwiseConvolution2D
-from keras.layers import DepthwiseConv2D as DepthwiseConvolution2D
-from keras.models import Model
-from keras.layers import Input, Lambda, Activation,Conv2D, Convolution2D, MaxPooling2D, ZeroPadding2D, Reshape, Concatenate,BatchNormalization, Add, Conv2DTranspose
-from keras.regularizers import l2
+from tensorflow.keras.layers import DepthwiseConv2D as DepthwiseConvolution2D
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Lambda, Activation,Conv2D, Convolution2D, MaxPooling2D, ZeroPadding2D, Reshape, Concatenate,BatchNormalization, Add, Conv2DTranspose
+from tensorflow.keras.regularizers import l2
 #from models.mobilenet_v1 import mobilenet
 #from misc.keras_layer_L2Normalization import L2Normalization
 #from misc.keras_layer_AnchorBoxes import AnchorBoxes

@@ -6,11 +6,11 @@ tf.compat.v1.disable_eager_execution()
 
 import tensorflow.keras as keras
 keras.backend.set_learning_phase(True)
-from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, CSVLogger, LearningRateScheduler
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, CSVLogger, LearningRateScheduler
 
 from networks import net_utils as net
 
-from dataset_loaders import GetGTCDatasetLoader, DatasetInfo
+from datasets.dataset_loaders import GetGTCDatasetLoader, DatasetInfo
 
 import networks
 import numpy as np
@@ -22,6 +22,8 @@ from gtc.gtcModel import singlePrecisionKerasModel
 def main(_BASEDIR, args):
     # set meta params
     make_GTC_model = True
+    args.verbose_output = True
+    args.save_weights   = True
     batch_size = args.batch_size
     nb_epoch = args.num_epochs
     network_name = 'lenet'   #args.network_name

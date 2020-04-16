@@ -1,11 +1,11 @@
 import tensorflow.keras as keras
 
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers.convolutional import Conv2D
-from tensorflow.keras.layers.convolutional import MaxPooling2D
-from tensorflow.keras.layers.core import Activation
-from tensorflow.keras.layers.core import Flatten
-from tensorflow.keras.layers.core import Dense
+from tensorflow.keras.layers import Conv2D
+from tensorflow.keras.layers import MaxPooling2D
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras import backend as K
 

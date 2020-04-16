@@ -232,14 +232,14 @@ class GTCModel:
                 elif len(lyr_ip_vars) == 1:
                     self._forward_prop_inputs[lyr] = lyr_ip_vars[0]
 
-                    print('---- lyr  : ', lyr)
-                    print ('----lyr_obj :  ', lyr_obj)
-                    print ('----lyr_obj dictionary   :', lyr_obj.__dict__.keys())
-                    print('---in compile input',
-                        self._forward_prop_inputs[lyr])
-                    #print ('----_keras_layer = ', lyr_obj._keras_layer)
-                    print('--all layer ops', 
-                        self._forward_prop_outputs)
+                    # print('---- lyr  : ', lyr)
+                    # print ('----lyr_obj :  ', lyr_obj)
+                    # print ('----lyr_obj dictionary   :', lyr_obj.__dict__.keys())
+                    # print('---in compile input',
+                    #     self._forward_prop_inputs[lyr])
+                    # #print ('----_keras_layer = ', lyr_obj._keras_layer)
+                    # print('--all layer ops', 
+                    #     self._forward_prop_outputs)
                     batchnorm_training_kwargs = {}
                     #Using a 'training' flag for dynamic training/testing does not work, just 
                     # like using the keras learning_phase()
@@ -681,7 +681,8 @@ class GTCModel:
         with h5py.File(filepath, 'w') as f:
             keras_version = keras.__version__
             group = f
-            keras.engine.network.saving.save_attributes_to_hdf5_group(
+            import tensorflow.python.keras.engine.network.saving.save_attributes_to_hdf5_group as save_attributes_to_hdf5_group
+            save_attributes_to_hdf5_group(
                 group, 'layer_names', [layer['name'].encode('utf8') for layer in net_layers])
             group.attrs['backend'] = K.backend().encode('utf8')
             group.attrs['keras_version'] = str(keras_version).encode('utf8')

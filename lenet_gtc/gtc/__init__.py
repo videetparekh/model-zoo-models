@@ -109,7 +109,7 @@ def from_str(layer_type_name, keras=False):
         'L2Normalization': L2Normalization,
     }
 
-    import keras.layers as k
+    import tensorflow.keras.layers as k
 
     all_layers_keras = {
         'Activation': k.Activation,

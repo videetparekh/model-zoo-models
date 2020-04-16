@@ -32,8 +32,8 @@ new_activations = {'relu6': keras.layers.Activation(tf.nn.relu6),
                    'hsigmoid': keras.layers.Activation(hard_sigmoid_relu6),  # use hsigmoid to avoid overwriting native keras 'hard_sigmoid' activation
                    'hswish': keras.layers.Activation(hard_swish)}
 
-import keras.utils.generic_utils
-keras.utils.generic_utils.get_custom_objects().update(new_activations)
+#import keras.utils.generic_utils
+#keras.utils.generic_utils.get_custom_objects().update(new_activations)
 
 
 

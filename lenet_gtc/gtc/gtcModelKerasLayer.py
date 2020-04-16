@@ -45,9 +45,11 @@ class GTCModelKerasLayer(keras.layers.Layer):
 
     def build(self, input_shape):
         # Add references to trainable weights, so backprop can update these weights
-        if self._get_weights_function is not None:
-            self.trainable_weights += self._get_weights_function(trainable=True, non_trainable=False)
-            self.non_trainable_weights += self._get_weights_function(trainable=False, non_trainable=True)
+        # if self._get_weights_function is not None:
+        #     self.trainable_weights += self._get_weights_function(trainable=True, non_trainable=False)
+        #     self.non_trainable_weights += self._get_weights_function(trainable=False, non_trainable=True)
+        # --------- These references ARE READ ONLY in TF 2.0 you can not modify them
+        # --------- At the previous TF 1.13 it was necessary to add those lines
 
         if self._get_losses_function is not None:
             # TODO: distinguish between weight regularizers (input independent)

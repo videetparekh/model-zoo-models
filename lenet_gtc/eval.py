@@ -97,9 +97,14 @@ if __name__ == '__main__':
     #model = LeNet(config, x_placeholder)
     gtc_model.load_weights(_BASEDIR + 'models/lenet_trained_on_mnist_final_weights.h5', sess=sess)
     
-    # Create a keras model wrapper for the gtc model.
-    keras_model = gtc_model.build_keras_model(lambda_weights, verbose=True)
-
+    # # Create a keras model wrapper for the gtc model.
+    # from networks.keras_lenet import LeNet_keras
+    # keras_model = LeNet_keras(config)
+    # # compile keras model
+    # crossentropy_loss = keras.losses.categorical_crossentropy
+    # keras_model.compile(loss=crossentropy_loss)
+    # keras_model = gtc_model.build_keras_model(lambda_weights, verbose=True)
+    
     # Once trained, you can
     evaluate_on_test_dataset_again = True
     if evaluate_on_test_dataset_again:
@@ -115,10 +120,10 @@ if __name__ == '__main__':
             x,y = test_dataLoader[j]
             y_gt_label = int( np.argmax( y[0] ) )
 
-            # for the keras_model wrapper, the predict() function calculates
-            # both outputs (hp and lp), concatenated in a list
-            y_pred = keras_model.predict(x)
-            y_pred_hp, y_pred_lp = y_pred[0], y_pred[1]
+            # # for the keras_model wrapper, the predict() function calculates
+            # # both outputs (hp and lp), concatenated in a list
+            # y_pred = keras_model.predict(x)
+            # y_pred_hp, y_pred_lp = y_pred[0], y_pred[1]
 
             # You can also use the 'predict' method of the underlying gtcModel.
             # This accepts an argument 'hp', if hp=True, it uses the high-precision branch
@@ -126,21 +131,22 @@ if __name__ == '__main__':
             y_pred_hp2 = gtc_model.predict(x, hp=True)
             y_pred_lp2 = gtc_model.predict(x, hp=False)
 
-            y_pred_label_hp = int(np.argmax(y_pred_hp))
-            y_pred_label_lp = int(np.argmax(y_pred_lp))
+            y_pred_label_hp = int(np.argmax(y_pred_hp2))
+            y_pred_label_lp = int(np.argmax(y_pred_lp2))
 
-            assert np.allclose(y_pred_hp, y_pred_hp2)
-            assert np.allclose(y_pred_lp, y_pred_lp2)
+            # assert np.allclose(y_pred_hp, y_pred_hp2)
+            # assert np.allclose(y_pred_lp, y_pred_lp2)
             print('Sample %d' % (j+1))
             print(' Actual GT label:      %d. \n Predicted label (hp): %d. \n Predicted label (lp): %d\n' % (
                 y_gt_label, y_pred_label_hp, y_pred_label_lp) )
 
         # After training you can also use the underlying gtcModel in a similar way
-        test_dataLoader = datagen_test.flow(batch_size=batch_size, max_num_batches=val_steps, shuffle=False)
-        print('Evaluating on test set using Keras wrapper model:')
-        net.eval_classification_model_on_dataset(keras_model, test_dataLoader,
-                                                hp=True, lp=True)
-
+        # test_dataLoader = datagen_test.flow(batch_size=batch_size, max_num_batches=val_steps, shuffle=False)
+        # print('Evaluating on test set using Keras wrapper model:')
+        # net.eval_classification_model_on_dataset(keras_model, test_dataLoader,
+        #                                         hp=True, lp=True)
+        batch_size  = 32
+        val_steps = int( np.ceil(len(datagen_test) / batch_size) )
         test_dataLoader = datagen_test.flow(batch_size=batch_size, max_num_batches=val_steps, shuffle=False)
         print('Evaluating on test set using gtc model:')
         net.eval_classification_model_on_dataset(gtc_model, test_dataLoader,
