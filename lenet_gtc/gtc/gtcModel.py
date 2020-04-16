@@ -681,7 +681,7 @@ class GTCModel:
         with h5py.File(filepath, 'w') as f:
             keras_version = keras.__version__
             group = f
-            import tensorflow.python.keras.engine.network.saving.save_attributes_to_hdf5_group as save_attributes_to_hdf5_group
+            from tensorflow.python.keras.saving.hdf5_format import save_attributes_to_hdf5_group
             save_attributes_to_hdf5_group(
                 group, 'layer_names', [layer['name'].encode('utf8') for layer in net_layers])
             group.attrs['backend'] = K.backend().encode('utf8')
@@ -693,7 +693,7 @@ class GTCModel:
                 weight_values = K.batch_get_value(symbolic_weights)
                 weight_names = layer['weight_names']
 
-                keras.engine.network.saving.save_attributes_to_hdf5_group(
+                save_attributes_to_hdf5_group(
                     g, 'weight_names', weight_names)
                 for name, val in zip(weight_names, weight_values):
                     param_dset = g.create_dataset(name, val.shape,

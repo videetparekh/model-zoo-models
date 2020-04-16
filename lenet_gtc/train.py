@@ -14,16 +14,16 @@ from datasets.dataset_loaders import GetGTCDatasetLoader, DatasetInfo
 
 import networks
 import numpy as np
-from leip.compress.training.config import config
-
+#from leip.compress.training.config import config
+from config import config
 from gtc.gtcModel import singlePrecisionKerasModel
 
 
 def main(_BASEDIR, args):
     # set meta params
     make_GTC_model = True
-    args.verbose_output = True
-    args.save_weights   = True
+    #args.verbose_output = True
+    #args.save_weights   = True
     batch_size = args.batch_size
     nb_epoch = args.num_epochs
     network_name = 'lenet'   #args.network_name
