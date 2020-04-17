@@ -18,18 +18,18 @@ def save_config(base_dir, args):
     f.close()
 
 
-def config(base_dir, name_of_experiment='testing_pretrained_initialization',
+def config(base_dir, name_of_experiment='lenet_on_mnist',
            optimizer='sgd',
-           batch_size=128,
-           num_epochs=151,
-           learning_rate=.01,
+           batch_size=32,
+           num_epochs=1,
+           learning_rate=.0002,
            max_number_bb_per_gt=10,
            image_size=(32, 32),
-           num_channels=3,
+           num_channels=1,
            num_classes=10,
-           lambda_bit_loss=.0,
-           lambda_distillation_loss=.0,
-           weight_decay=.005,
+           lambda_bit_loss=1e-5,
+           lambda_distillation_loss=0.01,
+           weight_decay=.0002,
            learning_rate_decay=None,
            resume_training=False,
            path_to_pretrained_model=None,
@@ -127,7 +127,6 @@ def config(base_dir, name_of_experiment='testing_pretrained_initialization',
     parser.add_argument("--savemodel", default=True, type=bool,
                         help="Save all the models at the end")
     args = parser.parse_args()
-
     path_expt = base_dir + '/' + args.name_of_experiment + '/'
     model_path = path_expt + 'model/'
     logs_path = path_expt + 'logs/'

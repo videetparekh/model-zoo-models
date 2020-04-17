@@ -88,14 +88,14 @@ if __name__ == '__main__':
     # # convert class vectors to binary class matrices
     # y_test = keras.utils.to_categorical(y_test, args.num_classes)
 
-    json_file = _BASEDIR + 'models/lenet_trained_on_mnist_final_weights.json'
+    json_file = _BASEDIR + 'models_for_eval/lenet_trained_on_mnist_final_weights.json'
 
     sess = tf.compat.v1.InteractiveSession()
     keras.backend.set_learning_phase(True)
     gtc_model = gtc.GTCModel()
     gtc_model.load_model_def(json_file)
     #model = LeNet(config, x_placeholder)
-    gtc_model.load_weights(_BASEDIR + 'models/lenet_trained_on_mnist_final_weights.h5', sess=sess)
+    gtc_model.load_weights(_BASEDIR + 'models_for_eval/lenet_trained_on_mnist_final_weights.h5', sess=sess)
     
     # # Create a keras model wrapper for the gtc model.
     # from networks.keras_lenet import LeNet_keras

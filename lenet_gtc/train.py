@@ -20,6 +20,7 @@ from gtc.gtcModel import singlePrecisionKerasModel
 
 
 def main(_BASEDIR, args):
+    print(args)
     # set meta params
     make_GTC_model = True
     #args.verbose_output = True
@@ -29,9 +30,7 @@ def main(_BASEDIR, args):
     network_name = 'lenet'   #args.network_name
     dataset_name = 'mnist'  #args.dataset_name
     dataset_info = DatasetInfo(dataset_name)
-    # DatasetLoader = GTCMNistDatasetLoader # This one is specifically for MNIST
     DatasetLoader = GetGTCDatasetLoader(dataset_name)  # More general. for any of the supported datasets.
-
     model_name = network_name + '_trained_on_' + dataset_name
 
     nb_classes = dataset_info.num_classes
@@ -189,10 +188,11 @@ def main(_BASEDIR, args):
     #LearningRateScheduler
     # Define
     callbacks = []
+    os.makedirs(_BASEDIR + "models/", exist_ok=True)
 
-    save_model_checkpoint = True
+    save_model_checkpoint = args.save_model_checkpoint
     if save_model_checkpoint:
-        model_cp_path =  _BASEDIR + '/weights/' + model_name + '_checkpoint.h5'
+        model_cp_path =  _BASEDIR + 'models/' + model_name + '_checkpoint.h5'
         monitor = 'val_lp_loss' if make_GTC_model else 'val_loss'
         callbacks.append(ModelCheckpoint(model_cp_path, monitor=monitor,
                                         save_best_only=True, save_weights_only=make_GTC_model))
@@ -228,7 +228,7 @@ def main(_BASEDIR, args):
         keras_ext = '' if make_GTC_model else '_keras'
         q_act_ext = '_qact' if quantize_inputs_logits_outputs else ''
 
-        final_weights_file = _BASEDIR + 'weights/' + model_name + '_final_weights' + keras_ext + q_act_ext + '.h5'
+        final_weights_file = _BASEDIR + 'models/' + model_name + '_final_weights' + keras_ext + q_act_ext + '.h5'
         keras_model.save_weights(final_weights_file)
 
         if make_GTC_model:
@@ -247,11 +247,6 @@ def main(_BASEDIR, args):
         # To Load weights, do:
         # keras_model.load_weights(final_weights_file)
 
-
-    
-
-
-
         # After training you can also use the underlying gtcModel in a similar way
         test_dataLoader = datagen_test.flow(batch_size=batch_size, max_num_batches=val_steps, shuffle=False)
         print('Evaluating on test set using Keras wrapper model:')
@@ -265,21 +260,21 @@ def main(_BASEDIR, args):
 
     print_layers_bits = args.print_layers_bits
     if print_layers_bits:
+        print('----- Number of bits used per each layer ------')
         bits_per_layer = gtc_model.get_bits_per_layer()
         for k in bits_per_layer:
             print('Layer ', k, ' with ',bits_per_layer[k].eval(),' bits') 
 
     savemodel = args.savemodel
-    os.makedirs(_BASEDIR + "weights/pure_model/", exist_ok=True)
     if (savemodel == 'HP') or (savemodel == 'BOTH'):
         keras_hp_model = singlePrecisionKerasModel(model_file, final_weights_file_hp, hp=True,
                               add_softmax = True, verbose=args.verbose_output)
-        keras_hp_model.save(_BASEDIR + "weights/pure_model/hp_model.hd5")
+        keras_hp_model.save(_BASEDIR + "models/hp_model.hd5")
 
     if (savemodel == 'LP') or (savemodel == 'BOTH'):
         keras_lp_model = singlePrecisionKerasModel(model_file, final_weights_file_lp, hp=False,
                               add_softmax = True, verbose=args.verbose_output)
-        keras_lp_model.save(_BASEDIR + "weights/pure_model/lp_model.hd5")
+        keras_lp_model.save(_BASEDIR + "models/lp_model.hd5")
         
 
 
@@ -296,7 +291,7 @@ if __name__ == "__main__":
     #dataset_name = 'cifar10'        # uncomment this line to use cifar10
 
 ################
-    _BASEDIR = '/home/gtc-tensorflow/lenetOutput/'
+    _BASEDIR = '/home/model-zoo-models/lenet_gtc/'
     args = config(_BASEDIR,
                 name_of_experiment='checking_regularization',
                 batch_size=32,
@@ -305,8 +300,8 @@ if __name__ == "__main__":
                 weight_decay=.0002,
                 image_size=(28, 28),
                 num_channels=1,
-                lambda_bit_loss=.01,
-                lambda_distillation_loss=1e-5,
+                lambda_bit_loss=1e-5,
+                lambda_distillation_loss=0.01,
                 )
     main(_BASEDIR, args)
 

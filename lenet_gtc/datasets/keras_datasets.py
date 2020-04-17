@@ -8,7 +8,9 @@ import numpy as np
 from utility_scripts import misc_utl as utl
 from datasets.dataset_loaders import DatasetLoader, GTCBaseImageDataGenerator
 
-import keras.datasets
+import tensorflow.keras as keras
+#import keras.datasets
+
 
 # keras datasets include:
 # mnist, imdb, reuters, cifar10, cifar100, boston_housing, fashion_mnist

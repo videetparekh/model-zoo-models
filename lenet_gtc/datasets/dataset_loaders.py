@@ -3,13 +3,13 @@ import wget
 import tarfile
 from zipfile import ZipFile
 import shutil
-import tensorflow.keras as keras
+import keras
 import numpy as np
 import imageio
 import cv2
 from datetime import datetime
 import glob
-from tensorflow.keras import backend
+from keras import backend
 
 
 

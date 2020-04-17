@@ -4,9 +4,9 @@
             "obj",
             "LambdaWeights",
             {
-                "bit_loss": 0.01,
+                "bit_loss": 1e-05,
                 "bits_per_layer": 0,
-                "distillation_loss": 1e-05,
+                "distillation_loss": 0.01,
                 "hp": 1,
                 "lp": 0
             }
