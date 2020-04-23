@@ -1,309 +1,290 @@
 import os
+import sys
+import yaml
+import logging
+
+from collections import namedtuple
+
 import tensorflow.compat.v1 as tf
+import numpy as np
+
+from tf_flags import FLAGS, unparsed
+from leip_tf_model import prepare_model_settings, create_leip_gmodel
+
+import input_data
 
 tf.compat.v1.disable_v2_behavior()
 tf.compat.v1.disable_eager_execution()
 
-import tensorflow.keras as keras
-keras.backend.set_learning_phase(True)
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, CSVLogger, LearningRateScheduler
+from leip.compress.training.utility_scripts.weight_readers import CheckpointReader
 
-from networks import net_utils as net
-
-from datasets.dataset_loaders import GetGTCDatasetLoader, DatasetInfo
-
-import networks
-import numpy as np
-#from leip.compress.training.config import config
-from config import config
-from gtc.gtcModel import singlePrecisionKerasModel
-
-
-def main(_BASEDIR, args):
-    print(args)
-    # set meta params
-    make_GTC_model = True
-    #args.verbose_output = True
-    #args.save_weights   = True
-    batch_size = args.batch_size
-    nb_epoch = args.num_epochs
-    network_name = 'lenet'   #args.network_name
-    dataset_name = 'mnist'  #args.dataset_name
-    dataset_info = DatasetInfo(dataset_name)
-    DatasetLoader = GetGTCDatasetLoader(dataset_name)  # More general. for any of the supported datasets.
-    model_name = network_name + '_trained_on_' + dataset_name
-
-    nb_classes = dataset_info.num_classes
-    imsize = dataset_info.imsize
-
-    # The lambda weights define how much weights are given to different portions of
-    # the loss function. (e.g. hp=weight given to the cross-entropy loss of the
-    # high-precision branch, usually set to 1. lp=weight given to the cross-entropy
-    # loss of the low-precision branch, usually set to 0. to train the low-precision
-    # branch, the distillation loss should be a nonzero (but small) value, eg. 0.01.
-    # to add a cost to the number of bits (to encourage bit compression),
-    # provide a non-zero bit_loss (should usually be very small, e.g. ~1e-5, but
-    # the precise value should scale with the number of quantized layers in the network.)  )
-    if make_GTC_model:
-        lambda_weights = net.LambdaWeights(hp=1, # must be 1 for GTC
-                                        lp=0,    # must be 0 for GTC 
-                                        distillation_loss=args.lambda_distillation_loss,
-                                        bit_loss=args.lambda_bit_loss)
-
-        do_lp_network = lambda_weights.lp is not None or \
-                        lambda_weights.distillation_loss is not None or \
-                        lambda_weights.bit_loss is not None
+def set_tf_loglevel(level):
+    if level >= logging.FATAL:
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    if level >= logging.ERROR:
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+    if level >= logging.WARNING:
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
     else:
-        lambda_weights = None
-        do_lp_network = False
-
-    quantize_inputs_logits_outputs = False
-
-    config = net.NetConfig(image_size=imsize,
-                        stride2_use=[2,3,4],  # only needed for mobilenet-v2 on smaller datasets
-                        include_preprocessing=False,
-                        batchnorm_share='none',
-                        do_batchnorm=True,
-                        do_dropout=False,
-                        identity_quantization=not do_lp_network,
-                        do_weight_regularization=False,
-                        num_classes=nb_classes,
-                        quant_pre_skip=1,
-                        quant_post_skip=1,
-                        quantize_input=quantize_inputs_logits_outputs,
-                        quantize_features=quantize_inputs_logits_outputs,
-                        quantize_logits_output=quantize_inputs_logits_outputs,
-                        conv_quant='gtc', bn_quant='identity', act_quant='identity')
-
-    # load data
-
-    datagen_train = DatasetLoader(split='train')
-    datagen_train.build(
-        featurewise_center=True,
-        featurewise_std_normalization=True,
-        rotation_range=0.0,   # optional dataset augmentation (mostly disabled for now)
-        width_shift_range=0,
-        height_shift_range=0,
-        vertical_flip=False,
-        horizontal_flip=False,
-        # we have to supply the the lambda weights to the (customized) data generator.
-        # Depending on which losses are not 'None', it duplicates the 'y' (target output)
-        # appropriately so that the same target output is provided for the hp and
-        # lp branches. it also provides a dummy vector of zeros for the distillation
-        # and bitloss outputs (in keras, each output requires a target), if those
-        # losses are not 'None'.
-        lambda_weights=lambda_weights)
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
+    logging.getLogger('tensorflow').setLevel(level)
 
 
-
-    datagen_test = DatasetLoader(split='test')
-    datagen_test.build(
-        featurewise_center=True,        # apply the same normalizations, but don't
-        featurewise_std_normalization=True, # do any augmentations on the test set.
-        lambda_weights=lambda_weights)
+set_tf_loglevel(logging.FATAL)
 
 
-    optimizer=args.optimizer
+def main(_):
 
-    sess = tf.InteractiveSession()
+    session_conf = tf.compat.v1.ConfigProto(
+      intra_op_parallelism_threads=4,
+      inter_op_parallelism_threads=4)
+    sess = tf.compat.v1.InteractiveSession(config=session_conf)
 
-    crossentropy_loss = keras.losses.categorical_crossentropy
+    model_settings = prepare_model_settings(
+        len(input_data.prepare_words_list(FLAGS.wanted_words.split(','))),
+        FLAGS.sample_rate, FLAGS.clip_duration_ms, FLAGS.window_size_ms,
+        FLAGS.window_stride_ms, FLAGS.feature_bin_count, FLAGS.preprocess)
 
+    audio_processor = input_data.AudioProcessor(
+        FLAGS.data_url, FLAGS.data_dir,
+        FLAGS.silence_percentage, FLAGS.unknown_percentage,
+        FLAGS.wanted_words.split(','), FLAGS.validation_percentage,
+        FLAGS.testing_percentage, model_settings, summaries_dir=None)
 
+    input_frequency_size = model_settings['fingerprint_width']
+    input_time_size = model_settings['spectrogram_length']
 
-    if make_GTC_model:
-        print('Building a GTC model')
-        x_placeholder = tf.placeholder(tf.float32, [None] + list(config.image_size[:3]))
+    # deal with pathes and directories
+    # --------------------------------
+    exp_dir = 'train_data'
 
-        # use 'net_type' class to define a network type.
-        # e.g.: net_type = net.NetworkType('resnet', num_layers=50)
-        # or    net_type = net.NetworkType('vgg', num_layers=50)
+    if FLAGS.exp_dir is not None:
+        exp_dir = FLAGS.exp_dir
 
-        if network_name == 'lenet':
-            net_type = net.NetworkType('lenet')
-        elif network_name == 'mobilenet':
-            net_type = net.MobilenetType(version=2)
-        elif network_name == 'resnet18':
-            net_type = net.NetworkType('resnet', num_layers=18, style='ic')
-        else:
-            raise ValueError('Undefined network')
+    if not os.path.exists(exp_dir):
+        os.mkdir(exp_dir)
 
-        config.net_style = net_type.style
-        gtc_model = net.GetNetwork(net_type)(config, x_placeholder)
+    summaries_dir = os.path.join(exp_dir, 'summaries')
+    if not os.path.exists(summaries_dir):
+        os.mkdir(summaries_dir)
 
-        # Use print_model() to show the layers of the model.
+    validation_log_path = os.path.join(summaries_dir, 'validation')
+    if not os.path.exists(validation_log_path):
+        os.mkdir(validation_log_path)
 
-        # Create a keras model wrapper for the gtc model.
-        keras_model = gtc_model.build_keras_model(lambda_weights, verbose=True)
+    training_log_path = os.path.join(summaries_dir, 'train')
+    if not os.path.exists(training_log_path):
+        os.mkdir(training_log_path)
 
-        gtc_model.initialize(sess, initialize_weights=True, verbose=False)
+    lp_export_model_path = os.path.join(exp_dir, 'model')
+    if not os.path.exists(lp_export_model_path):
+        os.mkdir(lp_export_model_path)
+    # --------------------------------
 
-        if args.verbose_output :
-            gtc_model.print_model()
+    # configuration
+    leip_args = {
+        'batch_size': FLAGS.batch_size,
+        'num_epochs': 1,
+        'learning_rate': 0.0001,
+        'num_channels': 1,
+        'lambda_bit_loss': FLAGS.lambda_bit_loss,
+        'lambda_distillation_loss': FLAGS.lambda_distillation_loss
+    }
 
-        loss_use, metrics_use, loss_weights_use = \
-            keras_model.gtcModel.lambda_weights.AugmentLossesAndMetrics(hp_lp_loss=crossentropy_loss, hp_lp_metric=net.acc)
+    print('-' * 10)
+    print(leip_args)
+    print('-' * 10)
 
-        # Use keras summary() to show the keras view of the model.
-        # In this view, all the gtc layers are wrapped up in a single layer
-        # called 'gtc_model_keras_layer'
-        keras_model.summary()
+    with open(os.path.join(exp_dir, 'leip_args.yaml'), 'w') as fp:
+        yaml.dump(leip_args, fp)
 
+    leip_args = namedtuple('LeipArgs', leip_args.keys())(*leip_args.values())
 
-    else:
-        print('Building a Pure keras model')
-        gtc_model = None
-        keras_model = None
+    fingerprint_size = model_settings['fingerprint_size']
+    print('fingerprint size:', fingerprint_size)
 
-        from networks.keras_lenet import LeNet_keras
-        from networks.mobilenet_v2_keras import MobileNetV2 as MobileNetV2_keras
+    input_placeholder = tf.compat.v1.placeholder(
+        tf.float32, [None, fingerprint_size], name='fingerprint_input')
 
-        if network_name == 'lenet':
-            keras_model = LeNet_keras(config)
-        elif network_name == 'mobilenet_v2':
-            keras_model = MobileNetV2_keras(config=config)
-        else:
-            # define the an alternate keras model here
-            pass
-
-        assert keras_model is not None, "Please define an alternate keras model"
-
-        keras_model.save_weights('test.h5')
-
-        loss_use = crossentropy_loss
-        loss_weights_use = None
-        metrics_use = [net.acc]      # accuracy in percent
-
-        keras_model.summary()
-
-
-    # compile keras model
-    keras_model.compile(optimizer=optimizer,
-                        loss=loss_use,
-                        loss_weights=loss_weights_use,
-                        metrics=metrics_use)
-
-
-
-    #LearningRateScheduler
-    # Define
-    callbacks = []
-    os.makedirs(_BASEDIR + "models/", exist_ok=True)
-
-    save_model_checkpoint = args.save_model_checkpoint
-    if save_model_checkpoint:
-        model_cp_path =  _BASEDIR + 'models/' + model_name + '_checkpoint.h5'
-        monitor = 'val_lp_loss' if make_GTC_model else 'val_loss'
-        callbacks.append(ModelCheckpoint(model_cp_path, monitor=monitor,
-                                        save_best_only=True, save_weights_only=make_GTC_model))
+    fingerprint_4d = tf.compat.v1.reshape(input_placeholder,
+                                [-1, input_time_size, input_frequency_size, 1])
+    ground_truth_input = tf.compat.v1.placeholder(
+        tf.int64, [None, model_settings['label_count']], name='groundtruth_input')
+    dropout = tf.compat.v1.placeholder(
+        tf.float32,
+        name="dropout"
+    )
+    model = create_leip_gmodel(fingerprint_4d, model_settings)
+    model.compile()
 
 
-    train_steps_per_epoch = int( np.ceil(len(datagen_train) / batch_size) )
-    val_steps = int( np.ceil(len(datagen_test) / batch_size) )
+    print('Compiled Model')
+    model.print_model()
+
+    hp_cross_entropy_dict = model.hp_cross_entropy(ground_truth_input)
+    hp_cross_entropy = tf.reduce_sum(list(hp_cross_entropy_dict.values()))
+    distillation_loss_dict = model.distillation_loss()
+    distillation_loss = tf.reduce_sum(list(distillation_loss_dict.values()))
+    bit_loss = model.bit_loss()
+
+    logits = model._forward_prop_outputs['dense']['hp']
+    predicted_indices = tf.argmax(input=logits, axis=1)
+    labels = tf.argmax(ground_truth_input, axis=0)
+    correct_prediction = tf.equal(predicted_indices, labels)
+
+    evaluation_step = tf.reduce_mean(input_tensor=tf.cast(correct_prediction,
+                                                          tf.float32))
+    with tf.compat.v1.get_default_graph().name_scope('eval'):
+        tf.compat.v1.summary.scalar('cross_entropy', hp_cross_entropy)
+        tf.compat.v1.summary.scalar('accuracy', evaluation_step)
+
+    lambda_distillation_loss = tf.constant(leip_args.lambda_distillation_loss)
+    lambda_bit_loss = tf.constant(leip_args.lambda_bit_loss)
+
+    # Total loss
+    losses = {}
+
+    lambda_vars = {}
+    lambda_vars['lambda_bit_loss'] = lambda_bit_loss
+    lambda_vars['lambda_distillation_loss'] = lambda_distillation_loss
+    lambda_vars['lambda_regularization'] = .01
+
+    # optimizer
+    losses['total_loss'] = hp_cross_entropy + distillation_loss * lambda_vars[
+        'lambda_distillation_loss'] + bit_loss * lambda_vars['lambda_bit_loss']
+
+    learning_rate = tf.compat.v1.placeholder(tf.float32, name='lr')
+    optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate).minimize(
+        losses['total_loss'])
+    metrices = {}
+
+    model.lp_accuracy(ground_truth_input)
+    model.hp_accuracy(ground_truth_input)
+    model.compile_training_info(
+        loss=losses, optimizer=optimizer, metrices=metrices)
+
+    print('SUMMARY')
+    with tf.compat.v1.get_default_graph().name_scope('gtc'):
+        summary_ops = model.get_summary()
+        for k, v in summary_ops.items():
+            if isinstance(v, dict):
+                for k1, v1 in v.items():
+                    tf.summary.scalar('_'.join([k, k1]), v1)
+            else:
+                tf.summary.scalar('_'.join(k), v)
+
+    init = tf.compat.v1.global_variables_initializer()
+    merge_gtc_summary = tf.compat.v1.summary.merge_all(scope="gtc")
+
+    sess.run(init)
+    train_writer = tf.compat.v1.summary.FileWriter(
+        training_log_path, sess.graph)
+    validation_writer = tf.compat.v1.summary.FileWriter(
+        validation_log_path, sess.graph)
+
+    test_batches = 0
+    batches = 1
+    time_shift_samples = int((FLAGS.time_shift_ms * FLAGS.sample_rate) / 1000)
+
+    test_average = {}
+    test_average['lp_accuracy', 'dense'] = []
+    test_average['hp_accuracy', 'dense'] = []
+    test_average['total_loss', 'total_loss'] = []
+    test_average['bit_loss'] = []
+    test_average['distillation_loss', 'dense'] = []
+    test_average['hp_cross_entropy', 'dense'] = []
+
+    if FLAGS.tf_checkpoint is not None:
+        print('Loading from checkpoint: {}'.format(FLAGS.tf_checkpoint))
+        model_reader = CheckpointReader(FLAGS.tf_checkpoint)
+        model.load_pretrained_weights_from_reader(model_reader)
+        print('Checkpoint restored.')
+
+    for e in range(FLAGS.train_steps):
+        print('Train step: {}'.format(e+1))
+        sys.stdout.flush()
+
+        x_batch, y_train = audio_processor.get_data(
+            leip_args.batch_size, 0, model_settings, FLAGS.background_frequency,
+            FLAGS.background_volume, time_shift_samples, 'training', sess)
+        y_train = y_train.astype(int)
+        y_batch = np.zeros(
+            [leip_args.batch_size, model_settings['label_count']], dtype=int)
+        y_batch[np.arange(leip_args.batch_size), y_train] = 1
+
+        data_dict = {
+            input_placeholder: x_batch,
+            ground_truth_input: y_batch,
+            learning_rate: leip_args.learning_rate,
+            dropout: 0.2
+        }
+        model.train_on_batch(data_dict)
+
+        if batches % 100 == 0:
+            print('Step', e + 1, '/', leip_args.num_epochs, 'checkup',
+                  batches, model.print_summary(data_dict))
+            if merge_gtc_summary is not None:
+                param_summary = merge_gtc_summary.eval(data_dict)
+                train_writer.add_summary(param_summary, batches)
+            else:
+                print('Evaluation summary has not been saved.')
+
+        if batches % 500 == 0:
+            print('Saving the Model')
+            model.save(path=os.path.join(lp_export_model_path, 'training_{:0>5d}/'.format(batches)), int_model=False)
+            print('Saving the integer Model')
+            model.save(path=os.path.join(lp_export_model_path, 'int_model_{:0>5d}/'.format(batches)), int_model=True)
+
+        if batches % FLAGS.eval_step_interval == 0 or batches == 1:
+            set_size = audio_processor.set_size('validation')
+            print("################# VALIDATION ###################")
+            for i in range(0, set_size, leip_args.batch_size):
+                x_valid_batch, y_valid = audio_processor.get_data(
+                    leip_args.batch_size, i, model_settings, 0.0, 0.0, 0, 'validation', sess)
+
+                this_batch_size = np.min([leip_args.batch_size, x_valid_batch.shape[0]])
+                # if len(y_valid)!=leip_args.batch_size:
+                #     break
+                y_valid = y_valid.astype(int)
+                y_valid_batch = np.zeros([this_batch_size, model_settings['label_count']], dtype=int)
+                y_valid_batch[np.arange(this_batch_size), y_valid] = 1
+
+                valid_data_dict = {
+                    input_placeholder: x_valid_batch,
+                    ground_truth_input: y_valid_batch,
+                    dropout: 0.0
+                }
+                if merge_gtc_summary is not None:
+                    param_summary = merge_gtc_summary.eval(valid_data_dict)
+                    validation_writer.add_summary(param_summary, test_batches + 1)
+
+                for k1 in test_average.keys():
+                    if isinstance(k1, tuple):
+                        test_average[k1].append(
+                            summary_ops[k1[0]][k1[1]].eval(valid_data_dict))
+                    else:
+                        test_average[k1].append(
+                            summary_ops[k1].eval(valid_data_dict))
+
+                print('Epoch', e + 1, 'test batch', test_batches, model.print_summary(valid_data_dict))
+
+                test_batches += 1
 
 
-    history = keras_model.fit_generator(
-        datagen_train.flow(batch_size=batch_size, shuffle=True),
-        steps_per_epoch=train_steps_per_epoch,
-        epochs=nb_epoch,
-        verbose=1,
-        callbacks=callbacks,
-        validation_data=datagen_test.flow(batch_size=batch_size),
-        validation_steps= val_steps
-        )
-    # keras_ext = '' if make_GTC_model else '_keras'
-    # q_act_ext = '_qact' if quantize_inputs_logits_outputs else ''
+            print("Test results after steps:", e)
+            [
+                print(k,
+                      sum(v) / len(v))
+                for k, v in test_average.items()
+            ]
+            print("################# VALIDATION ###################")
 
-    # final_weights_file = _BASEDIR + 'weights/' + model_name + '_final_weights' + keras_ext + q_act_ext + '.h5'
-    # keras_model.load_weights(final_weights_file)
+        batches = batches + 1
 
-    if make_GTC_model and args.verbose_output:
-        # If you pass in the current tensorflow session (sess), print_model will also
-        # display the quantization parameters
-        gtc_model.print_model(sess=sess)
-
-
-    save_weights = args.save_weights or args.print_layers_bits
-    if save_weights:
-        keras_ext = '' if make_GTC_model else '_keras'
-        q_act_ext = '_qact' if quantize_inputs_logits_outputs else ''
-
-        final_weights_file = _BASEDIR + 'models/' + model_name + '_final_weights' + keras_ext + q_act_ext + '.h5'
-        keras_model.save_weights(final_weights_file)
-
-        if make_GTC_model:
-            final_weights_file_hp = final_weights_file.replace('.h5', '_hp.h5')
-            final_weights_file_lp = final_weights_file.replace('.h5', '_lp.h5')
-            model_file = final_weights_file.replace('.h5', '.json')
-
-            gtc_model.save_model_def(model_file)
-            gtc_model.save_weights_for_keras_model(final_weights_file_hp, hp=True)
-            gtc_model.save_weights_for_keras_model(final_weights_file_lp, hp=False)
-
-        # Alternatively, can also call using keras_model wrapper:
-        #if make_GTC_model:
-        #    gtc_model.save_weights(final_weights_file)
-
-        # To Load weights, do:
-        # keras_model.load_weights(final_weights_file)
-
-        # After training you can also use the underlying gtcModel in a similar way
-        test_dataLoader = datagen_test.flow(batch_size=batch_size, max_num_batches=val_steps, shuffle=False)
-        print('Evaluating on test set using Keras wrapper model:')
-        net.eval_classification_model_on_dataset(keras_model, test_dataLoader,
-                                                hp=True, lp=True)
-
-        test_dataLoader = datagen_test.flow(batch_size=batch_size, max_num_batches=val_steps, shuffle=False)
-        print('Evaluating on test set using gtc model:')
-        net.eval_classification_model_on_dataset(gtc_model, test_dataLoader,
-                                                hp=True, lp=True)
-
-    print_layers_bits = args.print_layers_bits
-    if print_layers_bits:
-        print('----- Number of bits used per each layer ------')
-        bits_per_layer = gtc_model.get_bits_per_layer()
-        for k in bits_per_layer:
-            print('Layer ', k, ' with ',bits_per_layer[k].eval(),' bits') 
-
-    savemodel = args.savemodel
-    if (savemodel == 'HP') or (savemodel == 'BOTH'):
-        keras_hp_model = singlePrecisionKerasModel(model_file, final_weights_file_hp, hp=True,
-                              add_softmax = True, verbose=args.verbose_output)
-        keras_hp_model.save(_BASEDIR + "models/hp_model.hd5")
-
-    if (savemodel == 'LP') or (savemodel == 'BOTH'):
-        keras_lp_model = singlePrecisionKerasModel(model_file, final_weights_file_lp, hp=False,
-                              add_softmax = True, verbose=args.verbose_output)
-        keras_lp_model.save(_BASEDIR + "models/lp_model.hd5")
-        
+    model.save(path=os.path.join(lp_export_model_path, 'training_final/'), int_model=False)
+    model.save(path=os.path.join(lp_export_model_path, 'int_model_final/'), int_model=True)
 
 
 if __name__ == "__main__":
-################
-    make_GTC_model = True           # uncomment this line to make GTC model.
-    # make_GTC_model = False        # uncomment this line to make a pure keras model.
-
-    network_name = 'lenet'         # uncomment this line to use lenet
-    # network_name = 'mobilenet_v2'   # uncomment this line to use mobilenet-v2
-    #network_name = 'resnet18'        # uncomment this line to use resnet18
-
-    dataset_name = 'mnist'         # uncomment this line to use mnist
-    #dataset_name = 'cifar10'        # uncomment this line to use cifar10
-
-################
-    _BASEDIR = '/home/model-zoo-models/lenet_gtc/'
-    args = config(_BASEDIR,
-                name_of_experiment='checking_regularization',
-                batch_size=32,
-                num_epochs=1,
-                learning_rate=.0002,
-                weight_decay=.0002,
-                image_size=(28, 28),
-                num_channels=1,
-                lambda_bit_loss=1e-5,
-                lambda_distillation_loss=0.01,
-                )
-    main(_BASEDIR, args)
-
-
+    tf.compat.v1.app.run(main=main, argv=[sys.argv[0]] + unparsed)
 
