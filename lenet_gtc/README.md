@@ -22,8 +22,8 @@ ADAM optimization is used.
 Important moment to take into account is `lambda_bit_loss` and `lambda_distillation_loss`. These two arguments control the quantization process. Their values are chosen so that a model accurate enough and with low number of bits is created! 
 Increasing `lambda_distillation_loss` loss increases accuracy.
 Increasing `lambda_bit_loss` decreases average number of bits used.
-The regularization term, determined by `lambda_distillation_loss` pulls all the weights down towards zero. Very often it help the GTC model converge to a better local solution. It is not meaningful for the LeNet system. It is presented here as an option for other models.
+The regularization term, determined by `lambda_distillation_loss` pulls all the weights down towards zero. Very often it helps the GTC model converge to a better local solution. It is not meaningful for the LeNet system and is presented here as a demonstration of system capabilities.
 
-If the values are too high, the system can not train, so it is not recommended to increase them by more then 20 times.
+If the values of the lambdas are too high, the system can not attain high accuracy, so it is not recommended to increase them by more then 20 times.
 
 
