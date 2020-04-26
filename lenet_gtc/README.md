@@ -1,36 +1,29 @@
-# Download pretrained checkpoints
+# MNIST dataset
 
-`./dev_docker_run leip zoo download --model_id audio-recognition-gtc --variant_id gtc_baseline_30`
-
-Downloaded checkpoint will have two directories: `int_model_10000` and `training_10000`
-
-`int_model_10000` has tensorflow checkpoint with quantized model during training i.e. low precision model
-
-`training_10000` this is a high precision model.
+This code uses the built-in data library MNIST.
+It is downloaded automaticaly at the first run,, and is used afterwards.
+Internal Tensorflow librariues are used for that 
+`from tensorflow.keras.datasets import mnist`
 
 # Train
 
-Training procedure for LEIP model (training aware quantization) is being done in two stages.
+Training of the model is performed "from scratch". Since the model is simple and the dataset is relatively
+small, the whole training might take around 30 seconds for one epoch. 
+10 epochs is usually enough ot get a decent result.
 
-First stage. Train the model such that only high precision model is being trained.
-Second stage. Use pretrained weights to fine tune the model to train low precision weights.
 
-`python train.py --data_dir dataset --exp_dir prepare_hp --batch_size 512 --train_steps 1000 --eval_step_interval 200 --lambda_bit_loss 0.0 --lambda_distillation_loss 0.0`
+Basic training command:
+`python3 train.py --basedirectory ***`
+which is equivalent to the following default parameters:
+`python3 train.py --basedirectory *** --batch_size 64 --learning_rate 0.0002 --lambda_bit_loss 1e-5 --lambda_distillation_loss 0.01 --lambda_regularization 0.01`
 
-Important moment to take into account is `lambda_bit_loss` and `lambda_distillation_loss`. These two arguments control the quantization process. For the time of preparing high precision model these argument should be set to zero. That is why bit loss and distillation loss values for training progress should be ignored.
+ADAM optimization is useds.
 
-After training process is finished we should get satisfactory results. For example accuracy has value around 60-70%.
+Important moment to take into account is `lambda_bit_loss` and `lambda_distillation_loss`. These two arguments control the quantization process. Their values are chosen so that a model accurate enough and with low number of bits is created! 
+Increasing `lambda_distillation_loss` loss increases accuracy.
+Increasing `lambda_bit_loss` decreases average number of bits used.
+The regularization term, determined by `lambda_distillation_loss` pulls all the weights down towards zero. Very often it help the GTC model converge to a better local solution. It is not meaningfull for the LeNet system. It is presented here as an option for other models.
 
-Then we proced to second stage: train the low precision model.
+If the values are too high, the system can not train, so it is not recommended to increase them by more then 20 times.
 
-The difference here is that we use pretrained high precision weights from the previous stage. That we achieve by using argument `tf_checkpoint`.
-
-Also we set `bit_loss` and `distilation_loss` to non-zero values. For this specific task distillation loss has the value in range [0, 10] so we set lambda for it equal to 0.1. The bit loss is in range [100, 200] so we set lambda value to 0.01.
-
-These lambda values allow us to control how much of impact the loss does for weights update.
-
-And our train command will be as follows:
-
-`python train.py --data_dir dataset --exp_dir prepare_lp --batch_size 512 --train_steps 1000 --eval_step_interval 200 --tf_checkpoint prepare_hp/model/training_01000/variables/variables --lambda_bit_loss 0.01 --lambda_distillation_loss 0.1`
-Sample command for training
 

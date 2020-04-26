@@ -19,29 +19,24 @@ def save_config(base_dir, args):
 
 
 def config(name_of_experiment='lenet_on_mnist',
-           optimizer='sgd',
            batch_size=32,
-           num_epochs=1,
+           num_epochs=5,
            learning_rate=.0002,
            max_number_bb_per_gt=10,
-           image_size=(32, 32),
+           image_size=(28, 28),
            num_channels=1,
            num_classes=10,
            lambda_bit_loss=1e-5,
            lambda_distillation_loss=0.01,
            lambda_regularization=0.0001,
            weight_decay=.0002,
-           learning_rate_decay=None,
-           resume_training=False,
-           path_to_pretrained_model=None,
-           loading_pretrained_weights=False,
-           path_to_pretrained_weights=None):
+           learning_rate_decay=None):
     
     if image_size is None or (not isinstance(image_size, tuple)):
         raise ValueError('pass correct image size of the data')
 
     parser = argparse.ArgumentParser()
-    name_of_experiment = name_of_experiment + '_' + optimizer + '_weight_decay_' + str(
+    name_of_experiment = name_of_experiment + '_' + 'adam' + '_weight_decay_' + str(
         weight_decay) + '_lam_bl_' + str(lambda_bit_loss) + '_lam_dl_' + str(
         lambda_distillation_loss)
 
@@ -51,16 +46,9 @@ def config(name_of_experiment='lenet_on_mnist',
         default=name_of_experiment,
         help='Name of the experiment')
     parser.add_argument(
-        '--max_number_bb_per_gt',
-        type=int,
-        default=10,
-        help='maximum number of bounding boxes per GT')
-    parser.add_argument(
         '--batch_size', type=int, default=batch_size, help='batch size')
     parser.add_argument(
         '--num_epochs', type=int, default=num_epochs, help='num of epochs')
-    parser.add_argument(
-        '--optimizer', type=str, default=optimizer, help='optimizer')
     parser.add_argument(
         '--learning_rate',
         type=float,
@@ -95,38 +83,11 @@ def config(name_of_experiment='lenet_on_mnist',
         '--lambda_regularization',
         type=float,
         default=0.0001,
-        help='How lambda of regularizetion impacts the training.')
-    parser.add_argument(
-        '--resume_training',
-        type=bool,
-        default=resume_training,
-        help='Continue training')
-    parser.add_argument(
-        '--path_to_pretrained_model',
-        type=str,
-        default=str(path_to_pretrained_model),
-        help='path to pretrained_model')
-    parser.add_argument(
-        '--loading_pretrained_weights',
-        type=bool,
-        default=loading_pretrained_weights,
-        help='Want to load weights from pretrained model')
-    parser.add_argument(
-        '--path_to_pretrained_weights',
-        type=path_to_pretrained_weights,
-        default=str(path_to_pretrained_weights),
-        help='path to pretrained weight files')
+        help='lambda of the regularization')
     #gtc related cli parameters
-    parser.add_argument("--verbose_output", default="None",
-                        help="verbose output for all the gtc parameters")
     parser.add_argument("--basedirectory", default = "",
                         help="base directory for the output model")
     parser.add_argument("--print_layers_bits", default=True, type=bool, help="print bits per layer?")
-    parser.add_argument("--save_model_checkpoint", default=True, type=bool, help="Save model checkpoint?")
-    parser.add_argument("--dataset_name", default="mnist", help="Which dataset to use")
-    parser.add_argument("--network_name", default="lenet", help="Which network to use")
-    parser.add_argument("--savemodel", default=True, type=bool,
-                        help="Save all the models at the end")
     args = parser.parse_args()
     base_dir = args.basedirectory
     path_expt = base_dir + '/' + args.name_of_experiment + '/'

@@ -57,15 +57,7 @@ def print_summary_short(model, data_dict):
 
 def main():
  # define model, optimizer, training, hyperparams
-    args = config(name_of_experiment='lenet_on_mnist',
-                  batch_size=64,
-                  num_epochs=1,
-                  learning_rate=.0002,
-                  image_size=(28, 28),
-                  num_channels=1,
-                  lambda_bit_loss=.0001,
-                  lambda_distillation_loss=0.01,
-                  lambda_regularization=0.01)
+    args = config()
     _BASEDIR = args.basedirectory
     # print('*'*20)
     # print(args)
@@ -213,8 +205,8 @@ def main():
                                                   sess.graph)
         test_batches = 1
         batches = 1
-        # graphdef = tf.saved_model.loader.load(
-        #    sess, tags=["train"], export_dir=model_path)
+        #igraphdef = tf.saved_model.loader.load(
+        #        sess, tags=["train"], export_dir=model_path)
         for e in range(args.num_epochs):
 
             test_average = {}
@@ -241,61 +233,7 @@ def main():
                     print_summary_short(model, data_dict)
                     param_summary = merge.eval(data_dict)
                     train_writer.add_summary(param_summary, batches)
-                    # print("unique values in weights")
-                    # for k in model._layers_objects.keys():
-                    #     if isinstance(
-                    #             model._layers_objects[k]['layer_obj'],
-                    #             gtcConv2d) or isinstance(
-                    #         model._layers_objects[k]['layer_obj'],
-                    #         gtcDense):
-                    #         print(
-                    #             'lp_weights', k,
-                    #             np.unique(
-                    #                 model._layers_objects[k]['layer_obj'].
-                    #                     quantized_weights.eval()))
-                    #         if (model._layers_objects['dense']['layer_obj'].quantized_bias) is None:
-                    #             print('quantized bias', k, 'None')
-                    #         else:
-                    #             print(
-                    #                 'quantized bias', k,
-                    #                 np.unique(model._layers_objects[k]
-                    #                           ['layer_obj'].quantized_bias.eval()))
-                    #         print(
-                    #             'hp weights', k,
-                    #             np.unique(model._layers_objects[k]
-                    #                       ['layer_obj'].hp_weights.eval()))
-                    #         print('diff of weights',
-                    #               (model._layers_objects[k]['layer_obj'].
-                    #                quantized_weights.eval().flatten() -
-                    #                model._layers_objects[k]['layer_obj'].
-                    #                hp_weights.eval().flatten()))
-                    #         print(
-                    #             'sum_of_diff',
-                    #             np.sum(model._layers_objects[k]['layer_obj'].
-                    #                    quantized_weights.eval().flatten() -
-                    #                    model._layers_objects[k]['layer_obj'].
-                    #                    hp_weights.eval().flatten()))
-                    #         # print(
-                    #         #    'slope', model._layers_objects[k]['layer_obj'].
-                    #         #    _quantizer.q_slope.eval())
-                    #         # print(
-                    #         #    'intercept', model._layers_objects[k]
-                    #         #    ['layer_obj']._quantizer.q_intercept.eval())
-
-                    # for k in model._layers_objects.keys():
-                    #     if isinstance(model._layers_objects[k]['layer_obj'],
-                    #                   gtcConv2d):
-                    #         lp_var = model._forward_prop_outputs[k]['hp'].eval(
-                    #             data_dict)
-                    #         hp_var = model._forward_prop_outputs[k]['lp'].eval(
-                    #             data_dict)
-                    #         print('layer name', k)
-                    #         print('hp_var', hp_var.flatten())
-                    #         print('lp_var', lp_var.flatten())
-                    #         print('diff', hp_var.flatten() - lp_var.flatten())
-                    #         print('sum',
-                    #               np.sum(hp_var.flatten() - lp_var.flatten()))
-
+                    
                 batches = batches + 1
 
                 if batches % 5000 == 0:
@@ -304,8 +242,8 @@ def main():
                 if batches / ((e + 1) * (len(x_train) / args.batch_size)) > 1:
 
                     sys.stdout.flush()
-                    # checkpoint.save(file_prefix=checkpoint_prefix)
-                    # saver.save(sess, model_path)
+                    #checkpoint.save(file_prefix=checkpoint_prefix)
+                    #saver.save(sess, model_path)
                     print('Saving the Model')
                     model._save_model(
                         path=lp_model_path + 'training/', int_model=False)
@@ -326,11 +264,6 @@ def main():
                             else:
                                 test_average[k1].append(
                                     summary_ops[k1].eval(data_dict))
-
-                        # if test_batches % 50 == 0:
-                        #    print('Epoch', e + 1, '/', args.num_epochs,
-                        #          'test batch', test_batches,
-                        #          model.print_summary(data_dict))
 
                         if test_batches / (
                                 (e + 1) * (len(x_test) / args.batch_size)) > 1:
