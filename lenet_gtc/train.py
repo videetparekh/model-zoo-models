@@ -7,16 +7,23 @@ from collections import namedtuple
 
 import tensorflow.compat.v1 as tf
 import numpy as np
+from tabulate import tabulate
 
-from tf_flags import FLAGS, unparsed
-from leip_tf_model import prepare_model_settings, create_leip_gmodel
+from config import config
+from leip_tf_model import L1
 
-import input_data
+from tensorflow.keras.datasets import mnist
+import tensorflow.keras as keras
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.python.ops import variables
+
 
 tf.compat.v1.disable_v2_behavior()
 tf.compat.v1.disable_eager_execution()
 
 from leip.compress.training.utility_scripts.weight_readers import CheckpointReader
+from leip.compress.training.gtc.conv2d import Conv2d as gtcConv2d
+from leip.compress.training.gtc.dense import Dense as gtcDense
 
 def set_tf_loglevel(level):
     if level >= logging.FATAL:
@@ -33,113 +40,114 @@ def set_tf_loglevel(level):
 set_tf_loglevel(logging.FATAL)
 
 
-def main(_):
+def print_summary_short(model, data_dict):
+    outputs = ['hp_cross_entropy','total_loss','distillation_loss','bit_loss','regularization_term','lp_accuracy','hp_accuracy']
+    for k, v in model._summary.items():
+        if k in outputs:
+            if isinstance(v, dict):
+                for k1, v1 in v.items():
+                    if isinstance(v1, tuple):
+                        print(k, k1, v1[0].eval(data_dict))
+                    else:
+                        print(k, k1, v1.eval(data_dict))
+            else  :
+                print(k, v.eval(data_dict))
 
-    session_conf = tf.compat.v1.ConfigProto(
-      intra_op_parallelism_threads=4,
-      inter_op_parallelism_threads=4)
-    sess = tf.compat.v1.InteractiveSession(config=session_conf)
 
-    model_settings = prepare_model_settings(
-        len(input_data.prepare_words_list(FLAGS.wanted_words.split(','))),
-        FLAGS.sample_rate, FLAGS.clip_duration_ms, FLAGS.window_size_ms,
-        FLAGS.window_stride_ms, FLAGS.feature_bin_count, FLAGS.preprocess)
 
-    audio_processor = input_data.AudioProcessor(
-        FLAGS.data_url, FLAGS.data_dir,
-        FLAGS.silence_percentage, FLAGS.unknown_percentage,
-        FLAGS.wanted_words.split(','), FLAGS.validation_percentage,
-        FLAGS.testing_percentage, model_settings, summaries_dir=None)
+def main():
+ # define model, optimizer, training, hyperparams
+    args = config(name_of_experiment='lenet_on_mnist',
+                  batch_size=64,
+                  num_epochs=1,
+                  learning_rate=.0002,
+                  image_size=(28, 28),
+                  num_channels=1,
+                  lambda_bit_loss=.0001,
+                  lambda_distillation_loss=0.01,
+                  lambda_regularization=0.01)
+    _BASEDIR = args.basedirectory
+    # print('*'*20)
+    # print(args)
+    # print('*'*20)
 
-    input_frequency_size = model_settings['fingerprint_width']
-    input_time_size = model_settings['spectrogram_length']
+    print("Name of the Experiment", args.name_of_experiment, '\n')
+    # load data
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-    # deal with pathes and directories
-    # --------------------------------
-    exp_dir = 'train_data'
+    # reshape from rank 3 tensor to rank 4 tensor
+    x_train = np.reshape(x_train, (x_train.shape[0], args.image_size[0],
+                                   args.image_size[1], args.image_size[2]))
+    x_test = np.reshape(x_test, (x_test.shape[0], args.image_size[0],
+                                 args.image_size[1], args.image_size[2]))
 
-    if FLAGS.exp_dir is not None:
-        exp_dir = FLAGS.exp_dir
+    x_train = x_train.astype('float32')
+    x_test = x_test.astype('float32')
+    print('Dataset Statistics')
+    print('Training data shape', x_train.shape)
+    print('Testing data shape', x_test.shape)
 
-    if not os.path.exists(exp_dir):
-        os.mkdir(exp_dir)
+    # data generator
+    datagen = ImageDataGenerator(rescale=1. / 255)
+    print('Number of training samples', x_train.shape[0])
+    print('Number of test samples', x_test.shape[0], '\n')
 
-    summaries_dir = os.path.join(exp_dir, 'summaries')
-    if not os.path.exists(summaries_dir):
-        os.mkdir(summaries_dir)
+    # convert class vectors to binary class matrices
+    y_train = keras.utils.to_categorical(y_train, args.num_classes)
+    y_test = keras.utils.to_categorical(y_test, args.num_classes)
 
-    validation_log_path = os.path.join(summaries_dir, 'validation')
-    if not os.path.exists(validation_log_path):
-        os.mkdir(validation_log_path)
-
-    training_log_path = os.path.join(summaries_dir, 'train')
-    if not os.path.exists(training_log_path):
-        os.mkdir(training_log_path)
-
-    lp_export_model_path = os.path.join(exp_dir, 'model')
-    if not os.path.exists(lp_export_model_path):
-        os.mkdir(lp_export_model_path)
-    # --------------------------------
-
-    # configuration
-    leip_args = {
-        'batch_size': FLAGS.batch_size,
-        'num_epochs': 1,
-        'learning_rate': 0.0001,
-        'num_channels': 1,
-        'lambda_bit_loss': FLAGS.lambda_bit_loss,
-        'lambda_distillation_loss': FLAGS.lambda_distillation_loss
-    }
-
-    print('-' * 10)
-    print(leip_args)
-    print('-' * 10)
-
-    with open(os.path.join(exp_dir, 'leip_args.yaml'), 'w') as fp:
-        yaml.dump(leip_args, fp)
-
-    leip_args = namedtuple('LeipArgs', leip_args.keys())(*leip_args.values())
-
-    fingerprint_size = model_settings['fingerprint_size']
-    print('fingerprint size:', fingerprint_size)
-
-    input_placeholder = tf.compat.v1.placeholder(
-        tf.float32, [None, fingerprint_size], name='fingerprint_input')
-
-    fingerprint_4d = tf.compat.v1.reshape(input_placeholder,
-                                [-1, input_time_size, input_frequency_size, 1])
-    ground_truth_input = tf.compat.v1.placeholder(
-        tf.int64, [None, model_settings['label_count']], name='groundtruth_input')
-    dropout = tf.compat.v1.placeholder(
+    x_placeholder = tf.compat.v1.placeholder(
         tf.float32,
-        name="dropout"
-    )
-    model = create_leip_gmodel(fingerprint_4d, model_settings)
-    model.compile()
+        [None, args.image_size[0], args.image_size[1], args.image_size[2]])
+    learning_rate = tf.compat.v1.placeholder(tf.float32, name='lr')
 
+    # create the model layers
+    # try:
+    #    with tf.Session(graph=tf.Graph()) as sess:
+    #        tf.saved_model.loader.load(
+    #            sess, tags=["train"], export_dir=model_path)
+    # except:
+
+    model = L1(args, x_placeholder)
+    model.compile()
 
     print('Compiled Model')
     model.print_model()
+    # y_placeholder_dict = {}
+    # for op_key, op_val in model._output_layers.items():
+    #    y_placeholder_dict[op_key] = tf.placeholder(
+    #        tf.float32, shape=(op_val['hp'].shape))
+    y_placeholder = tf.compat.v1.placeholder(tf.float32, shape=(None, 10))
+    # loss functions
+    # High precision Cross entropy loss
+    # print('saveable obj', variables._all_saveable_objects())
+    # print('local vars', variables.local_variables())
+    # print(' global vars', variables.global_variables())
+    # print('model vars', variables.model_variables())
+    # print('trainable varts', variables.trainable_variables())
+    # print('moving average vars', variables.moving_average_variables())
+    hp_cross_entropy_dict = model.hp_cross_entropy(y_placeholder)
+    hp_cross_entropy = tf.reduce_sum(input_tensor=list(hp_cross_entropy_dict.values()))
 
-    hp_cross_entropy_dict = model.hp_cross_entropy(ground_truth_input)
-    hp_cross_entropy = tf.reduce_sum(list(hp_cross_entropy_dict.values()))
     distillation_loss_dict = model.distillation_loss()
-    distillation_loss = tf.reduce_sum(list(distillation_loss_dict.values()))
+    distillation_loss = tf.reduce_sum(input_tensor=list(distillation_loss_dict.values()))
+
     bit_loss = model.bit_loss()
+    regularization_loss = model.L2_regularization()
 
-    logits = model._forward_prop_outputs['dense']['hp']
-    predicted_indices = tf.argmax(input=logits, axis=1)
-    labels = tf.argmax(ground_truth_input, axis=0)
-    correct_prediction = tf.equal(predicted_indices, labels)
+    # regularization parameter
+    regularization_term = 0
+    for k in model._layers_objects.keys():
+        if isinstance(model._layers_objects[k]['layer_obj'],
+                      gtcConv2d) or isinstance(
+            model._layers_objects[k]['layer_obj'], gtcDense):
+            regularization_term = regularization_term + tf.nn.l2_loss(
+                model._layers_objects[k]['layer_obj'].hp_weights)
+            #print('---REGULARIZATION', regularization_term)
 
-    evaluation_step = tf.reduce_mean(input_tensor=tf.cast(correct_prediction,
-                                                          tf.float32))
-    with tf.compat.v1.get_default_graph().name_scope('eval'):
-        tf.compat.v1.summary.scalar('cross_entropy', hp_cross_entropy)
-        tf.compat.v1.summary.scalar('accuracy', evaluation_step)
-
-    lambda_distillation_loss = tf.constant(leip_args.lambda_distillation_loss)
-    lambda_bit_loss = tf.constant(leip_args.lambda_bit_loss)
+    lambda_distillation_loss = tf.constant(args.lambda_distillation_loss)
+    lambda_bit_loss = tf.constant(args.lambda_bit_loss)
+    lambda_regularization = tf.constant(args.lambda_regularization)
 
     # Total loss
     losses = {}
@@ -147,144 +155,212 @@ def main(_):
     lambda_vars = {}
     lambda_vars['lambda_bit_loss'] = lambda_bit_loss
     lambda_vars['lambda_distillation_loss'] = lambda_distillation_loss
-    lambda_vars['lambda_regularization'] = .01
+    lambda_vars['lambda_regularization'] = lambda_regularization
 
     # optimizer
     losses['total_loss'] = hp_cross_entropy + distillation_loss * lambda_vars[
-        'lambda_distillation_loss'] + bit_loss * lambda_vars['lambda_bit_loss']
+        'lambda_distillation_loss'] + bit_loss * lambda_vars[
+                               'lambda_bit_loss'] + lambda_vars[
+                               'lambda_regularization'] * regularization_loss
 
-    learning_rate = tf.compat.v1.placeholder(tf.float32, name='lr')
     optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate).minimize(
         losses['total_loss'])
+
     metrices = {}
 
-    model.lp_accuracy(ground_truth_input)
-    model.hp_accuracy(ground_truth_input)
+    model.lp_accuracy(y_placeholder)
+    model.hp_accuracy(y_placeholder)
     model.compile_training_info(
         loss=losses, optimizer=optimizer, metrices=metrices)
 
-    print('SUMMARY')
-    with tf.compat.v1.get_default_graph().name_scope('gtc'):
-        summary_ops = model.get_summary()
-        for k, v in summary_ops.items():
-            if isinstance(v, dict):
-                for k1, v1 in v.items():
-                    tf.summary.scalar('_'.join([k, k1]), v1)
-            else:
-                tf.summary.scalar('_'.join(k), v)
+    # print('check inputs to network')
+    # [print(k, v) for k, v in model._layers_strings.items()]
+    # print('check forward inputs')
+    # [print(k, v) for k, v in model._forward_prop_inputs.items()]
+    # print('check layer objects')
+    # [print(k, v) for k, v in model._layers_objects.items()]
 
+    # summary
+    summary_ops = model.get_summary()
+    for k, v in summary_ops.items():
+        if isinstance(v, dict):
+            for k1, v1 in v.items():
+                # print(k, k1, v1, '\n')
+                tf.compat.v1.summary.scalar('_'.join([k, k1]), v1)
+        else:
+            # print(k, v, '\n')
+            tf.compat.v1.summary.scalar('_'.join(k), v)
+    # print('SUMMARY')
+    # [print(k, v) for k, v in summary_ops.items()]
+
+    validation_log_path = _BASEDIR + '/' + args.name_of_experiment + '/' + 'logs/' + 'validation'
+    training_log_path = _BASEDIR + '/' + args.name_of_experiment + '/' + 'logs/' + 'train'
+    model_path = _BASEDIR + '/' + args.name_of_experiment + '/' + 'model/' + 'model.ckpt'
+    lp_model_path = _BASEDIR + '/' + args.name_of_experiment + '/' + 'model/'
     init = tf.compat.v1.global_variables_initializer()
-    merge_gtc_summary = tf.compat.v1.summary.merge_all(scope="gtc")
+    # saving lp  model
 
-    sess.run(init)
-    train_writer = tf.compat.v1.summary.FileWriter(
-        training_log_path, sess.graph)
-    validation_writer = tf.compat.v1.summary.FileWriter(
-        validation_log_path, sess.graph)
+    merge = tf.compat.v1.summary.merge_all()
+    var_list = variables._all_saveable_objects(
+    ) + model._layers_objects['conv2d']['layer_obj']._save_params()
+    # print('variable list', var_list)
+    # saver = tf.train.Saver(var_list=var_list)
+    sys.stdout.flush()
+    with tf.compat.v1.Session() as sess:
+        sess.run(init)
+        train_writer = tf.compat.v1.summary.FileWriter(training_log_path, sess.graph)
+        validation_writer = tf.compat.v1.summary.FileWriter(validation_log_path,
+                                                  sess.graph)
+        test_batches = 1
+        batches = 1
+        # graphdef = tf.saved_model.loader.load(
+        #    sess, tags=["train"], export_dir=model_path)
+        for e in range(args.num_epochs):
 
-    test_batches = 0
-    batches = 1
-    time_shift_samples = int((FLAGS.time_shift_ms * FLAGS.sample_rate) / 1000)
+            test_average = {}
+            test_average['lp_accuracy', 'dense_2'] = []
+            test_average['hp_accuracy', 'dense_2'] = []
+            test_average['total_loss', 'total_loss'] = []
+            test_average['bit_loss'] = []
+            test_average['distillation_loss', 'dense_2'] = []
+            test_average['hp_cross_entropy', 'dense_2'] = []
+            test_average['regularization_term'] = []
 
-    test_average = {}
-    test_average['lp_accuracy', 'dense'] = []
-    test_average['hp_accuracy', 'dense'] = []
-    test_average['total_loss', 'total_loss'] = []
-    test_average['bit_loss'] = []
-    test_average['distillation_loss', 'dense'] = []
-    test_average['hp_cross_entropy', 'dense'] = []
-
-    if FLAGS.tf_checkpoint is not None:
-        print('Loading from checkpoint: {}'.format(FLAGS.tf_checkpoint))
-        model_reader = CheckpointReader(FLAGS.tf_checkpoint)
-        model.load_pretrained_weights_from_reader(model_reader)
-        print('Checkpoint restored.')
-
-    for e in range(FLAGS.train_steps):
-        print('Train step: {}'.format(e+1))
-        sys.stdout.flush()
-
-        x_batch, y_train = audio_processor.get_data(
-            leip_args.batch_size, 0, model_settings, FLAGS.background_frequency,
-            FLAGS.background_volume, time_shift_samples, 'training', sess)
-        y_train = y_train.astype(int)
-        y_batch = np.zeros(
-            [leip_args.batch_size, model_settings['label_count']], dtype=int)
-        y_batch[np.arange(leip_args.batch_size), y_train] = 1
-
-        data_dict = {
-            input_placeholder: x_batch,
-            ground_truth_input: y_batch,
-            learning_rate: leip_args.learning_rate,
-            dropout: 0.2
-        }
-        model.train_on_batch(data_dict)
-
-        if batches % 100 == 0:
-            print('Step', e + 1, '/', leip_args.num_epochs, 'checkup',
-                  batches, model.print_summary(data_dict))
-            if merge_gtc_summary is not None:
-                param_summary = merge_gtc_summary.eval(data_dict)
-                train_writer.add_summary(param_summary, batches)
-            else:
-                print('Evaluation summary has not been saved.')
-
-        if batches % 500 == 0:
-            print('Saving the Model')
-            model.save(path=os.path.join(lp_export_model_path, 'training_{:0>5d}/'.format(batches)), int_model=False)
-            print('Saving the integer Model')
-            model.save(path=os.path.join(lp_export_model_path, 'int_model_{:0>5d}/'.format(batches)), int_model=True)
-
-        if batches % FLAGS.eval_step_interval == 0 or batches == 1:
-            set_size = audio_processor.set_size('validation')
-            print("################# VALIDATION ###################")
-            for i in range(0, set_size, leip_args.batch_size):
-                x_valid_batch, y_valid = audio_processor.get_data(
-                    leip_args.batch_size, i, model_settings, 0.0, 0.0, 0, 'validation', sess)
-
-                this_batch_size = np.min([leip_args.batch_size, x_valid_batch.shape[0]])
-                # if len(y_valid)!=leip_args.batch_size:
-                #     break
-                y_valid = y_valid.astype(int)
-                y_valid_batch = np.zeros([this_batch_size, model_settings['label_count']], dtype=int)
-                y_valid_batch[np.arange(this_batch_size), y_valid] = 1
-
-                valid_data_dict = {
-                    input_placeholder: x_valid_batch,
-                    ground_truth_input: y_valid_batch,
-                    dropout: 0.0
+            for x_batch, y_batch in datagen.flow(
+                    x_train, y_train, batch_size=args.batch_size):
+                data_dict = {
+                    x_placeholder: x_batch,
+                    y_placeholder: y_batch,
+                    learning_rate: args.learning_rate
                 }
-                if merge_gtc_summary is not None:
-                    param_summary = merge_gtc_summary.eval(valid_data_dict)
-                    validation_writer.add_summary(param_summary, test_batches + 1)
+                model.train_on_batch(data_dict)
 
-                for k1 in test_average.keys():
-                    if isinstance(k1, tuple):
-                        test_average[k1].append(
-                            summary_ops[k1[0]][k1[1]].eval(valid_data_dict))
-                    else:
-                        test_average[k1].append(
-                            summary_ops[k1].eval(valid_data_dict))
+                if batches % 100 == 0:
+                    print('------------ Epoch', e + 1, '/', args.num_epochs, 'batch',
+                          batches,'  ---------------------------------')
+                    print_summary_short(model, data_dict)
+                    param_summary = merge.eval(data_dict)
+                    train_writer.add_summary(param_summary, batches)
+                    # print("unique values in weights")
+                    # for k in model._layers_objects.keys():
+                    #     if isinstance(
+                    #             model._layers_objects[k]['layer_obj'],
+                    #             gtcConv2d) or isinstance(
+                    #         model._layers_objects[k]['layer_obj'],
+                    #         gtcDense):
+                    #         print(
+                    #             'lp_weights', k,
+                    #             np.unique(
+                    #                 model._layers_objects[k]['layer_obj'].
+                    #                     quantized_weights.eval()))
+                    #         if (model._layers_objects['dense']['layer_obj'].quantized_bias) is None:
+                    #             print('quantized bias', k, 'None')
+                    #         else:
+                    #             print(
+                    #                 'quantized bias', k,
+                    #                 np.unique(model._layers_objects[k]
+                    #                           ['layer_obj'].quantized_bias.eval()))
+                    #         print(
+                    #             'hp weights', k,
+                    #             np.unique(model._layers_objects[k]
+                    #                       ['layer_obj'].hp_weights.eval()))
+                    #         print('diff of weights',
+                    #               (model._layers_objects[k]['layer_obj'].
+                    #                quantized_weights.eval().flatten() -
+                    #                model._layers_objects[k]['layer_obj'].
+                    #                hp_weights.eval().flatten()))
+                    #         print(
+                    #             'sum_of_diff',
+                    #             np.sum(model._layers_objects[k]['layer_obj'].
+                    #                    quantized_weights.eval().flatten() -
+                    #                    model._layers_objects[k]['layer_obj'].
+                    #                    hp_weights.eval().flatten()))
+                    #         # print(
+                    #         #    'slope', model._layers_objects[k]['layer_obj'].
+                    #         #    _quantizer.q_slope.eval())
+                    #         # print(
+                    #         #    'intercept', model._layers_objects[k]
+                    #         #    ['layer_obj']._quantizer.q_intercept.eval())
 
-                print('Epoch', e + 1, 'test batch', test_batches, model.print_summary(valid_data_dict))
+                    # for k in model._layers_objects.keys():
+                    #     if isinstance(model._layers_objects[k]['layer_obj'],
+                    #                   gtcConv2d):
+                    #         lp_var = model._forward_prop_outputs[k]['hp'].eval(
+                    #             data_dict)
+                    #         hp_var = model._forward_prop_outputs[k]['lp'].eval(
+                    #             data_dict)
+                    #         print('layer name', k)
+                    #         print('hp_var', hp_var.flatten())
+                    #         print('lp_var', lp_var.flatten())
+                    #         print('diff', hp_var.flatten() - lp_var.flatten())
+                    #         print('sum',
+                    #               np.sum(hp_var.flatten() - lp_var.flatten()))
 
-                test_batches += 1
+                batches = batches + 1
 
+                if batches % 5000 == 0:
+                    args.learning_rate /= 2.
 
-            print("Test results after steps:", e)
-            [
-                print(k,
-                      sum(v) / len(v))
-                for k, v in test_average.items()
-            ]
-            print("################# VALIDATION ###################")
+                if batches / ((e + 1) * (len(x_train) / args.batch_size)) > 1:
 
-        batches = batches + 1
+                    sys.stdout.flush()
+                    # checkpoint.save(file_prefix=checkpoint_prefix)
+                    # saver.save(sess, model_path)
+                    print('Saving the Model')
+                    model._save_model(
+                        path=lp_model_path + 'training/', int_model=False)
+                    for x_batch, y_batch in datagen.flow(
+                            x_test, y_test, batch_size=args.batch_size):
+                        data_dict = {
+                            x_placeholder: x_batch,
+                            y_placeholder: y_batch
+                        }
+                        param_summary = merge.eval(data_dict)
+                        validation_writer.add_summary(param_summary,
+                                                      test_batches)
+                        test_batches = test_batches + 1
+                        for k1 in test_average.keys():
+                            if isinstance(k1, tuple):
+                                test_average[k1].append(
+                                    summary_ops[k1[0]][k1[1]].eval(data_dict))
+                            else:
+                                test_average[k1].append(
+                                    summary_ops[k1].eval(data_dict))
 
-    model.save(path=os.path.join(lp_export_model_path, 'training_final/'), int_model=False)
-    model.save(path=os.path.join(lp_export_model_path, 'int_model_final/'), int_model=True)
+                        # if test_batches % 50 == 0:
+                        #    print('Epoch', e + 1, '/', args.num_epochs,
+                        #          'test batch', test_batches,
+                        #          model.print_summary(data_dict))
+
+                        if test_batches / (
+                                (e + 1) * (len(x_test) / args.batch_size)) > 1:
+                            print('*' * 20)
+                            print("Test results after epoches", e)
+                            sys.stdout.flush()
+                            [
+                                print(k,
+                                      sum(v) / len(v))
+                                for k, v in test_average.items()
+                            ]
+
+                            break
+                    break
+        if args.print_layers_bits:
+            print('----------------- Number of bits used per each layer ------------------------')
+            bits_per_layer = model._bits_per_layer()
+            for k, lb in bits_per_layer.items():
+                if ('conv' in k) or ('dense' in k):
+                    print('k = ',k, '  lb =  ',lb.eval())
+        path_expt = _BASEDIR + args.name_of_experiment + '/training_model_final/'
+        if os.path.exists(path_expt):
+            os.rmdir(path_expt)
+        model.save(path=os.path.join(_BASEDIR, args.name_of_experiment + '/training_model_final/'), int_model=False)
+        path_expt = _BASEDIR + args.name_of_experiment + '/int_model_final/'
+        if os.path.exists(path_expt):
+            os.rmdir(path_expt)
+        model.save(path=os.path.join(_BASEDIR, args.name_of_experiment + '/int_model_final/'), int_model=True)
 
 
 if __name__ == "__main__":
-    tf.compat.v1.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+    main()
 
