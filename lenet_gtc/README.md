@@ -26,4 +26,48 @@ The regularization term, determined by `lambda_distillation_loss` pulls all the 
 
 If the values of the lambdas are too high, the system can not attain high accuracy, so it is not recommended to increase them by more then 20 times.
 
+Expected result after 5 epochs:
+`Test results after epoches 4`
+
+`('lp_accuracy', 'dense_2') 0.94`
+
+`('hp_accuracy', 'dense_2') 0.97`
+
+`('total_loss', 'total_loss') 0.11`
+
+`bit_loss 130.15`
+
+`('distillation_loss', 'dense_2') 0.20`
+
+`('hp_cross_entropy', 'dense_2') 0.08`
+
+`regularization_term 202.27`
+
+The rseults are located in `./lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01`
+which will be created during the run. Main directories there:
+* `training_model_final` - contains the final trained HP model
+* `int_model_final`      - contains the final trained LP model
+
+These two models can be further taken through the leip pipeline and the evaluations and the compilations scripts, explained next.
+
+For the sequel perform `cd lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01`
+
+# Compile
+
+Compilinig the models:
+* `leip compile --input_path ./training_model_final/ --output_path ./HPcompiled`
+will create HO compiled model in directory HPcompiled.
+* `leip compile --input_path ./int_model_final/ --output_path ./LPcompiled`
+creates LP model in LPcompiled folder.
+
+You can check that the outputs of these two models work correctly using 
+```
+leip run --input_path /home/model-zoo-models/lenet_gtc/lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01/HPcompiled/ --test_path $MNISTDIR/images/zero.jpg --class_names $MNISTDIR/class_names.txt --input_names Placeholder --output_names Softmax --input_shapes 1,28,28
+```
+where the variable MNISTDIR consists of the full path to ../mnist_directory (it is included together with the repository). There are a few more files that can be replaced for zero.jpg.
+
+Similarly for the LP model one can check that (notice `HPcompiled` is repolaced with `LPcompiled` here)
+```
+leip run --input_path /home/model-zoo-models/lenet_gtc/lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01/LPcompiled/ --test_path $MNISTDIR/images/zero.jpg --class_names $MNISTDIR/class_names.txt --input_names Placeholder --output_names Softmax --input_shapes 1,28,28.
+```
 
