@@ -1,7 +1,7 @@
 # MNIST dataset
 
 This code uses the built-in data library MNIST.
-It is downloaded automatically at the first run,, and is used afterwards.
+It is downloaded automatically at the first run, and is used afterwards.
 Internal Tensorflow libraries are used for that 
 `from tensorflow.keras.datasets import mnist`
 
@@ -12,10 +12,12 @@ small, the whole training might take around 30 seconds for one epoch.
 10 epochs is usually enough to get a decent result.
 
 
-Basic training command:
-`python3 train.py --basedirectory ***`
+Basic training commands:
+`mkdir train_dir`
+
+`python3 train.py --basedirectory train_dir`
 which is equivalent to the following default parameters:
-`python3 train.py --basedirectory *** --batch_size 64 --learning_rate 0.0002 --lambda_bit_loss 1e-5 --lambda_distillation_loss 0.01 --lambda_regularization 0.01`
+`python3 train.py --basedirectory train_dir --batch_size 64 --learning_rate 0.0002 --lambda_bit_loss 1e-5 --lambda_distillation_loss 0.01 --lambda_regularization 0.01`
 
 ADAM optimization is used.
 
@@ -35,7 +37,7 @@ bit_loss 130.15
 ('hp_cross_entropy', 'dense_2') 0.08
 regularization_term 202.27
 ```
-The rseults are located in `./lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01`
+The results are located in `./lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01`
 which will be created during the run. Main directories there:
 * `training_model_final` - contains the final trained HP model
 * `int_model_final`      - contains the final trained LP model
