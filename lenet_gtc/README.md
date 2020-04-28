@@ -80,3 +80,21 @@ Similarly, one can compress the LP model:
 ```
 leip compress --input_path int_model_final/ --bits 5 --output_path LPcompressed
 ```
+
+# Evaluation of the models
+The script `create_data.py` creates data for evaluation. The data is already created in the folder 
+`mnist_examples`.
+
+Checking the compressed models for HPcompressed:
+```
+leip evaluate --framework tf2 --input_path ./HPcompressed/model_save/ --test_path ../mnist_examples/index.txt --class_names ../mnist_examples/class_names.txt --task=classifier --dataset=custom --input_names Placeholder --output_names Softmax --input_shapes 1,28,28
+```
+Now it is possible to check that each one of the earlier created models works. Instead of the directory
+`HPcompressed/model_save/` insert `LPcompressed/model_save/`, `training_model_final/` or `int_model_final/`.
+
+We can also check that the compiled models work as follows (notice the change in framework `tf2->tvm` and the input_path directory):
+```
+leip evaluate --framework tvm --input_path ./HPcompiled/ --test_path ../mnist_examples/index.txt --class_names ../mnist_examples/class_names.txt --task=classifier --dataset=custom --input_names Placeholder --output_names Softmax --input_shapes 1,28,28
+```
+or with `LPcompiled` instead of `HPcompiled`.
+
