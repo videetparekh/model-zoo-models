@@ -1,27 +1,19 @@
+import logging
 import os
 import sys
-import yaml
-import logging
 
-from collections import namedtuple
-
-import tensorflow.compat.v1 as tf
 import numpy as np
-from tabulate import tabulate
-
+import tensorflow.compat.v1 as tf
+import tensorflow.keras as keras
 from config import config
 from leip_tf_model import L1
-
 from tensorflow.keras.datasets import mnist
-import tensorflow.keras as keras
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.python.ops import variables
-
 
 tf.compat.v1.disable_v2_behavior()
 tf.compat.v1.disable_eager_execution()
 
-from leip.compress.training.utility_scripts.weight_readers import CheckpointReader
 from leip.compress.training.gtc.conv2d import Conv2d as gtcConv2d
 from leip.compress.training.gtc.dense import Dense as gtcDense
 
