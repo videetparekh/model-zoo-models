@@ -71,3 +71,12 @@ Similarly for the LP model one can check that (notice `HPcompiled` is repolaced 
 leip run --input_path /home/model-zoo-models/lenet_gtc/lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01/LPcompiled/ --test_path $MNISTDIR/images/zero.jpg --class_names $MNISTDIR/class_names.txt --input_names Placeholder --output_names Softmax --input_shapes 1,28,28.
 ```
 
+# Compression of the model
+Compressing the HP model with 5 bits for each layer
+```
+leip compress --input_path training_model_final/ --bits 5 --output_path HPcompressed
+```
+Similarly, one can compress the LP model:
+```
+leip compress --input_path int_model_final/ --bits 5 --output_path LPcompressed
+```
