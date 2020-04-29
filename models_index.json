@@ -3,19 +3,12 @@
     {
       "id": "audio-recognition",
       "full_name": "Audio Recognition",
+      "description": "",
+      "repository_url": "https://github.com/latentai/model-zoo-models/tree/master/audio_recognition",
       "variants": [
         {
-          "id": "original",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/audio-recognition/2020-01-30-15-31-41/4166508def416ac56c20445888af4942.zip",
-          "model_schema": {
-            "output_names": "add_2",
-            "input_names": "fingerprint_input,dropout_prob"
-          }
-        },
-        {
           "id": "tf-baseline",
-          "compressed": false,
+          "show_in_frontend": true,
           "weights_url": "https://model-zoo-data.latentai.io/model-weights/audio_recognition/2020-04-02-15-24-04/92847cc4b33bf13afff48dd1fed62268.zip",
           "model_schema": {
             "output_names": "add_2",
@@ -26,13 +19,15 @@
     },
     {
       "id": "audio-recognition-gtc",
-      "full_name": "Audio Regognition: Training Aware",
+      "full_name": "Audio Recognition: Training Aware",
+      "description": "",
+      "repository_url": "https://github.com/latentai/model-zoo-models/tree/master/audio_recognition_gtc",
       "variants": [
         {
           "id": "gtc_baseline_30",
           "lp_accuracy": 0.77,
           "hp_accuracy": 0.87,
-          "compressed": false,
+          "show_in_frontend": true,
           "weights_url": "https://model-zoo-data.latentai.io/model-weights/audio_recognition/2020-04-02-15-24-04/92847cc4b33bf13afff48dd1fed62268.zip",
           "model_schema": {
             "output_names": "dense",
@@ -43,22 +38,39 @@
       ]
     },
     {
-      "id": "ssd_mobilenetv1",
-      "full_name": "SSD MobilenetV1",
+      "id": "yolo",
+      "full_name": "You Look Only Once Object Detection",
+      "description": "YOLO (You Only Look Once), is a deep neural network architecture for object detection. YOLO differentiates itself from other common neural network architectures for object detection tasks in that it performs inference usign a single forward pass through a single neural network.",
+      "repository_url": "https://github.com/latentai/model-zoo-models/tree/master/yolo",
       "variants": [
         {
-          "id": "tf-checkpoint",
+          "id": "keras_pretrained",
+          "show_in_frontend": false,
           "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/model-weights/ssd_mobilenetv1/2020-04-06-13-29-33/1c43a9afc7832b88b652538a4f6f770d.zip",
+          "weights_url": "http://model-zoo-data.latentai.io.s3.amazonaws.com/model-weights/yolo/2020-04-10-11-47-03/c73e22164d298dce0c5001ff501272a7.zip",
           "model_schema": {
-            "output_names": "predictions/concat",
+            "output_names": "conv_105/BiasAdd",
             "input_names": "input_1",
-            "input_shapes": "1, 300, 300, 3"
+            "input_shapes": "1, 224, 224, 3"
           }
         },
         {
-          "id": "keras-checkpoint",
+          "id": "keras_pretrained_backbone",
+          "show_in_frontend": false,
           "compressed": false,
+          "weights_url": "http://model-zoo-data.latentai.io.s3.amazonaws.com/model-weights/yolo/2020-04-21-12-12-17/62186a8066b28c8af75bdcf3be019cda.zip"
+        }
+      ]
+    },
+    {
+      "id": "ssd_mobilenetv1",
+      "full_name": "SSD MobilenetV1",
+      "description": "",
+      "repository_url": "https://github.com/latentai/model-zoo-models/tree/master/ssd_mobilenetv1",
+      "variants": [
+        {
+          "id": "keras-checkpoint",
+          "show_in_frontend": false,
           "weights_url": "https://model-zoo-data.latentai.io/model-weights/ssd_mobilenetv1/2020-04-06-13-30-23/6042b3e976bce1138639ab2750a10688.zip",
           "model_schema": {
             "output_names": "predictions/concat",
@@ -69,81 +81,45 @@
       ]
     },
     {
-      "id": "inception",
-      "full_name": "Inception V2",
-      "variants": [
-        {
-          "id": "original",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/inception/2020-02-19-15-31-41/0157539760afa517cef1c425ea1904fb.zip",
-          "model_schema": {
-            "output_names": "InceptionV2/Predictions/Softmax",
-            "input_names": "Placeholder"
-          }
-        }
-      ]
-    },
-    {
-      "id": "mobilenet",
-      "full_name": "Mobilenet V2",
-      "variants": [
-        {
-          "id": "original",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/mobilenet/2020-02-19-15-31-41/b30cacc6db345f06293dd10e83190efa.zip",
-          "model_schema": {
-            "output_names": "MobilenetV2/Predictions/Softmax",
-            "input_names": "input"
-          }
-        }
-      ]
-    },
-    {
       "id": "mobilenetv1",
       "full_name": "Mobilenet V1",
+      "description": "",
+      "repository_url": "https://github.com/latentai/model-zoo-models/tree/master/mobilenetv1",
       "variants": [
         {
           "id": "keras-open-images-10-classes",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/mobilenetv1/baseline-keras/2020-03-19-07-39-52/8cc68a3b3ba25adaf3ec1799c54353ae.zip",
+          "show_in_frontend": true,
+          "weights_url": "https://model-zoo-data.latentai.io/mobilenetv1/keras-open-images-10-classes/2020-04-13-23-38-16/8996927447f725c0a897bcbf4d876a25.zip",
+          "training_dataset": {
+            "dataset_id": "open-images-10-classes",
+            "variant_id": "eval"
+          },
+          "metrics_json": "mobilenetv1/metrics/open_images.json",
           "model_schema": {
             "output_names": "dense_3/Softmax",
             "input_names": "input_1",
             "preprocessor": "float32",
-            "input_shapes": "1,224,224,3"
+            "input_shapes": "1,224,224,3",
+            "task": "classifier",
+            "dataset": "custom"
           }
         },
         {
           "id": "keras-imagenet",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/mobilenetv1/keras-imagenet/2020-03-24-00-32-41/99a6e90cb7cedd4d8cd9402a519e3ba3.zip",
+          "show_in_frontend": true,
+          "weights_url": "https://model-zoo-data.latentai.io/mobilenetv1/keras-imagenet/2020-04-13-23-38-12/ad27ad2f39b3d73215ae55839d72eeca.zip",
+          "training_dataset": {
+            "dataset_id": "imagenet",
+            "variant_id": null
+          },
+          "metrics_json": null,
           "model_schema": {
             "output_names": "act_softmax/Softmax",
             "input_names": "input_1",
             "preprocessor": "imagenet",
-            "input_shapes": "1,224,224,3"
-          }
-        },
-        {
-          "id": "keras-open-images-10-classes-tf-checkpoint",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/mobilenetv1/keras-open-images-10-classes-tf-checkpoint/2020-03-27-23-01-15/d509ea2aab78ad29ea1d5292b3e9508e.zip",
-          "model_schema": {
-            "output_names": "dense_3/Softmax",
-            "input_names": "input_1",
-            "preprocessor": "float32",
-            "input_shapes": "1,224,224,3"
-          }
-        },
-        {
-          "id": "keras-imagenet-tf-checkpoint",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/mobilenetv1/keras-imagenet-tf-checkpoint/2020-03-27-23-02-24/4730badfbbbf5c7d91f6e6ef3c4065fe.zip",
-          "model_schema": {
-            "output_names": "act_softmax/Softmax",
-            "input_names": "input_1",
-            "preprocessor": "imagenet",
-            "input_shapes": "1,224,224,3"
+            "input_shapes": "1,224,224,3",
+            "task": "classifier",
+            "dataset": "custom"
           }
         }
       ]
@@ -151,49 +127,43 @@
     {
       "id": "mobilenetv2",
       "full_name": "Mobilenet V2",
+      "description": "",
+      "repository_url": "https://github.com/latentai/model-zoo-models/tree/master/mobilenetv2",
       "variants": [
         {
           "id": "keras-open-images-10-classes",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/mobilenetv2/baseline-keras/2020-03-18-01-21-40/e28f54c6dbba1ec46077b693a2716f77.zip",
+          "show_in_frontend": true,
+          "weights_url": "https://model-zoo-data.latentai.io/mobilenetv2/keras-open-images-10-classes/2020-04-13-23-38-25/f3de5bf63a2fceafefcf7cfac689fc6d.zip",
+          "training_dataset": {
+            "dataset_id": "open-images-10-classes",
+            "variant_id": "eval"
+          },
+          "metrics_json": "mobilenetv2/metrics/open_images.json",
           "model_schema": {
             "output_names": "dense_3/Softmax",
             "input_names": "input_1",
             "preprocessor": "float32",
-            "input_shapes": "1,224,224,3"
-          }
-        },
-        {
-          "id": "keras-open-images-10-classes-tf-checkpoint",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/mobilenetv2/keras-open-images-10-classes-tf-checkpoint/2020-03-27-22-57-41/a1ad6c673b908891a7b43b1baa0fd632.zip",
-          "model_schema": {
-            "output_names": "dense_3/Softmax",
-            "input_names": "input_1",
-            "preprocessor": "float32",
-            "input_shapes": "1,224,224,3"
+            "input_shapes": "1,224,224,3",
+            "task": "classifier",
+            "dataset": "custom"
           }
         },
         {
           "id": "keras-imagenet",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/mobilenetv2/keras/imagenet/2020-03-25-03-56-04/a454ff40483b837c35d30ceb1208e182.zip",
+          "show_in_frontend": true,
+          "weights_url": "https://model-zoo-data.latentai.io/mobilenetv2/keras-imagenet/2020-04-13-23-38-21/7b91c2ab8d28181894ce3a423cb8eb1c.zip",
+          "training_dataset": {
+            "dataset_id": "imagenet",
+            "variant_id": null
+          },
+          "metrics_json": "mobilenetv2/metrics/imagenet.json",
           "model_schema": {
             "output_names": "Logits/Softmax",
             "input_names": "input_1",
             "preprocessor": "imagenet",
-            "input_shapes": "1,224,224,3"
-          }
-        },
-        {
-          "id": "keras-imagenet-tf-checkpoint",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/mobilenetv2/keras-imagenet-tf-checkpoint/2020-03-27-22-56-52/5fa5462b679004d09b85bfe8343b3962.zip",
-          "model_schema": {
-            "output_names": "Logits/Softmax",
-            "input_names": "input_1",
-            "preprocessor": "imagenet",
-            "input_shapes": "1,224,224,3"
+            "input_shapes": "1,224,224,3",
+            "task": "classifier",
+            "dataset": "custom"
           }
         }
       ]
@@ -201,73 +171,43 @@
     {
       "id": "resnetv2-50",
       "full_name": "Resnetv2-50",
+      "description": "",
+      "repository_url": "https://github.com/latentai/model-zoo-models/tree/master/resnet50",
       "variants": [
         {
-          "id": "original",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/resnetv2-50/2020-02-19-15-31-41/67f4c4aafaafde44236eea5bdf0fd6a3.zip",
-          "model_schema": {
-            "output_names": "resnet_v2_50/predictions/Softmax",
-            "input_names": "Placeholder"
-          }
-        },
-        {
           "id": "keras-open-images-10-classes",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/baseline-keras/2020-03-16-06-13-03/221242539ce1af0fb6d605251bf1de4a.zip",
+          "show_in_frontend": true,
+          "weights_url": "https://model-zoo-data.latentai.io/resnetv2-50/keras-open-images-10-classes/2020-04-13-23-38-41/04618b5b9060438668b1a878d5473ae0.zip",
+          "training_dataset": {
+            "dataset_id": "open-images-10-classes",
+            "variant_id": "eval"
+          },
+          "metrics_json": "resnet50/metrics/open_images.json",
           "model_schema": {
             "output_names": "dense/Softmax",
             "input_names": "input_1",
             "preprocessor": "float32",
-            "input_shapes": "1,224,224,3"
-          }
-        },
-        {
-          "id": "keras-open-images-10-classes-tf-checkpoint",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/resnetv2-50/keras-open-images-10-classes-tf-checkpoint/2020-03-27-22-48-23/1fbd7ab885e38c39325a8e7b536df4cf.zip",
-          "model_schema": {
-            "output_names": "dense/Softmax",
-            "input_names": "input_1",
-            "preprocessor": "float32",
-            "input_shapes": "1,224,224,3"
+            "input_shapes": "1,224,224,3",
+            "task": "classifier",
+            "dataset": "custom"
           }
         },
         {
           "id": "keras-imagenet",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/keras-imagenet/2020-03-23-19-13-02/e7cde16c3e0514d7358bf7fe6115cc10.zip",
+          "show_in_frontend": true,
+          "weights_url": "https://model-zoo-data.latentai.io/resnetv2-50/keras-imagenet/2020-04-13-23-38-32/69598b3630011f49cbb582704cbeefac.zip",
+          "training_dataset": {
+            "dataset_id": "imagenet",
+            "variant_id": null
+          },
+          "metrics_json": "resnet50/metrics/imagenet.json",
           "model_schema": {
             "output_names": "probs/Softmax",
             "input_names": "input_1",
             "preprocessor": "imagenet_caffe",
-            "input_shapes": "1,224,224,3"
-          }
-        },
-        {
-          "id": "keras-imagenet-tf-checkpoint",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/resnetv2-50/keras-imagenet-tf-checkpoint/2020-03-27-22-51-41/6c737b648c298d0f11efdb5ce7ace12c.zip",
-          "model_schema": {
-            "output_names": "probs/Softmax",
-            "input_names": "input_1",
-            "preprocessor": "imagenet_caffe",
-            "input_shapes": "1,224,224,3"
-          }
-        }
-      ]
-    },
-    {
-      "id": "keras-resnet-18",
-      "full_name": "Keras Resnet 18",
-      "variants": [
-        {
-          "id": "original",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/keras-resnet-18/2020-02-19-15-31-41/98f09bdd50ad73fc4489764ef62a7f8d.zip",
-          "model_schema": {
-            "output_names": "softmax_tensor",
-            "input_names": "IteratorGetNext"
+            "input_shapes": "1,224,224,3",
+            "task": "classifier",
+            "dataset": "custom"
           }
         }
       ]
@@ -275,49 +215,43 @@
     {
       "id": "vgg16",
       "full_name": "VGG16",
+      "description": "",
+      "repository_url": "https://github.com/latentai/model-zoo-models/tree/master/vgg16",
       "variants": [
         {
           "id": "keras-open-images-10-classes",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/vgg16/keras-open-images-10-classes/2020-03-29-00-38-35/3a11758c0accb36c95d511c4366920e4.zip",
+          "show_in_frontend": true,
+          "weights_url": "https://model-zoo-data.latentai.io/vgg16/keras-open-images-10-classes/2020-04-13-23-39-26/7fecd4ed9cb6ce1f48d9605728fac3be.zip",
+          "training_dataset": {
+            "dataset_id": "open-images-10-classes",
+            "variant_id": "eval"
+          },
+          "metrics_json": "vgg16/metrics/open_images.json",
           "model_schema": {
             "output_names": "dense/Softmax",
             "input_names": "input_1",
             "preprocessor": "float32",
-            "input_shapes": "1,224,224,3"
-          }
-        },
-        {
-          "id": "keras-open-images-10-classes-tf-checkpoint",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/vgg16/keras-open-images-10-classes-tf-checkpoint/2020-03-29-00-33-16/6797c682eeaf3e5936804976b9ae8cc5.zip",
-          "model_schema": {
-            "output_names": "dense/Softmax",
-            "input_names": "input_1",
-            "preprocessor": "float32",
-            "input_shapes": "1,224,224,3"
+            "input_shapes": "1,224,224,3",
+            "task": "classifier",
+            "dataset": "custom"
           }
         },
         {
           "id": "keras-imagenet",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/vgg16/keras-imagenet/2020-03-29-00-40-28/933083e7ec8c35ceaa2f863f8ec10fe9.zip",
+          "show_in_frontend": true,
+          "weights_url": "https://model-zoo-data.latentai.io/vgg16/keras-imagenet/2020-04-13-23-39-07/90cd0632afb0fa49925398d9f6ea9880.zip",
+          "training_dataset": {
+            "dataset_id": "imagenet",
+            "variant_id": null
+          },
+          "metrics_json": "vgg16/metrics/imagenet.json",
           "model_schema": {
             "output_names": "predictions/Softmax",
             "input_names": "input_1",
-            "preprocessor": "imagenet",
-            "input_shapes": "1,224,224,3"
-          }
-        },
-        {
-          "id": "keras-imagenet-tf-checkpoint",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/vgg16/keras-imagenet-tf-checkpoint/2020-03-29-00-32-06/51bdbcbdb19d9e75d2d946b02321edce.zip",
-          "model_schema": {
-            "output_names": "predictions/Softmax",
-            "input_names": "input_1",
-            "preprocessor": "imagenet",
-            "input_shapes": "1,224,224,3"
+            "preprocessor": "imagenet_caffe",
+            "input_shapes": "1,224,224,3",
+            "task": "classifier",
+            "dataset": "custom"
           }
         }
       ]
@@ -325,49 +259,43 @@
     {
       "id": "inceptionv3",
       "full_name": "Inception V3",
+      "description": "",
+      "repository_url": "https://github.com/latentai/model-zoo-models/tree/master/inceptionv3",
       "variants": [
         {
           "id": "keras-open-images-10-classes",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/inceptionv3/keras-open-images-10-classes/2020-03-29-00-46-43/9414db1692b7721f81551faebd6fa186.zip",
+          "show_in_frontend": true,
+          "weights_url": "https://model-zoo-data.latentai.io/inceptionv3/keras-open-images-10-classes/2020-04-13-23-38-08/f4984b05f49065831ef176716a14a660.zip",
+          "training_dataset": {
+            "dataset_id": "open-images-10-classes",
+            "variant_id": "eval"
+          },
+          "metrics_json": "inceptionv3/metrics/open_images.json",
           "model_schema": {
             "output_names": "dense/Softmax",
             "input_names": "input_1",
             "preprocessor": "float32",
-            "input_shapes": "1,224,224,3"
-          }
-        },
-        {
-          "id": "keras-open-images-10-classes-tf-checkpoint",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/inceptionv3/keras-open-images-10-classes-tf-checkpoint/2020-03-29-00-43-43/817965f05e2265c01f01aa897ae8eff8.zip",
-          "model_schema": {
-            "output_names": "dense/Softmax",
-            "input_names": "input_1",
-            "preprocessor": "float32",
-            "input_shapes": "1,224,224,3"
+            "input_shapes": "1,224,224,3",
+            "task": "classifier",
+            "dataset": "custom"
           }
         },
         {
           "id": "keras-imagenet",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/inceptionv3/keras-imagenet/2020-03-29-00-49-40/2064dd4a9a51db2b032d6c3157fab850.zip",
+          "show_in_frontend": true,
+          "weights_url": "https://model-zoo-data.latentai.io/inceptionv3/keras-imagenet/2020-04-13-23-37-59/321a4048251230bca334403319ab9d71.zip",
+          "training_dataset": {
+            "dataset_id": "imagenet",
+            "variant_id": null
+          },
+          "metrics_json": "inceptionv3/metrics/imagenet.json",
           "model_schema": {
             "output_names": "predictions/Softmax",
             "input_names": "input_1",
             "preprocessor": "imagenet",
-            "input_shapes": "1,224,224,3"
-          }
-        },
-        {
-          "id": "keras-imagenet-tf-checkpoint",
-          "compressed": false,
-          "weights_url": "https://model-zoo-data.latentai.io/inceptionv3/keras-imagenet-tf-checkpoint/2020-03-29-00-42-04/c52332c2ffce9449bc0990107b2ecc7d.zip",
-          "model_schema": {
-            "output_names": "predictions/Softmax",
-            "input_names": "input_1",
-            "preprocessor": "imagenet",
-            "input_shapes": "1,224,224,3"
+            "input_shapes": "1,224,224,3",
+            "task": "classifier",
+            "dataset": "custom"
           }
         }
       ]
