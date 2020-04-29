@@ -35,7 +35,7 @@ bit_loss 130.15
 ('hp_cross_entropy', 'dense_2') 0.08
 regularization_term 202.27
 ```
-The rseults are located in `./lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01`
+The results are located in `./lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01`
 which will be created during the run. Main directories there:
 * `training_model_final` - contains the final trained HP model
 * `int_model_final`      - contains the final trained LP model
@@ -46,7 +46,7 @@ For the sequel perform `cd lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_
 
 # Compile
 
-Compilinig the models:
+Compiling the models:
 * `leip compile --input_path ./training_model_final/ --output_path ./HPcompiled`
 will create HO compiled model in directory HPcompiled.
 * `leip compile --input_path ./int_model_final/ --output_path ./LPcompiled`
@@ -58,7 +58,7 @@ leip run --input_path /home/model-zoo-models/lenet_gtc/lenet_on_mnist_adam_weigh
 ```
 where the variable MNISTDIR consists of the full path to ../mnist_directory (it is included together with the repository). There are a few more files that can be replaced for zero.jpg.
 
-Similarly for the LP model one can check that (notice `HPcompiled` is repolaced with `LPcompiled` here)
+Similarly for the LP model one can check that (notice `HPcompiled` is replaced with `LPcompiled` here)
 ```
 leip run --input_path /home/model-zoo-models/lenet_gtc/lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01/LPcompiled/ --test_path $MNISTDIR/images/zero.jpg --class_names $MNISTDIR/class_names.txt --input_names Placeholder --output_names Softmax --input_shapes 1,28,28.
 ```
@@ -90,3 +90,9 @@ leip evaluate --framework tvm --input_path ./HPcompiled/ --test_path ../mnist_ex
 ```
 or with `LPcompiled` instead of `HPcompiled`.
 
+# Eval.py
+We can use python script running inferences from a loaded model on images. The following command
+```
+python3 eval.py --input_path lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01/training_model_final/ --test_path mnist_examples/images --basedirectory evalOutput
+```
+will load HP model and run it on mnist_examples/images, producing a list of result in the directory (evalOutput).
