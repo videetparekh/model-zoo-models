@@ -1,7 +1,7 @@
 # MNIST dataset
 
 This code uses the built-in data library MNIST.
-It is downloaded automatically at the first run,, and is used afterwards.
+It is downloaded automatically at the first run, and is used afterwards.
 Internal Tensorflow libraries are used for that 
 `from tensorflow.keras.datasets import mnist`
 
@@ -12,10 +12,12 @@ small, the whole training might take around 30 seconds for one epoch.
 10 epochs is usually enough to get a decent result.
 
 
-Basic training command:
-`python3 train.py --basedirectory ***`
+Basic training commands:
+`mkdir train_dir`
+
+`python3 train.py --basedirectory train_dir`
 which is equivalent to the following default parameters:
-`python3 train.py --basedirectory *** --batch_size 64 --learning_rate 0.0002 --lambda_bit_loss 1e-5 --lambda_distillation_loss 0.01 --lambda_regularization 0.01`
+`python3 train.py --basedirectory train_dir --batch_size 64 --learning_rate 0.0002 --lambda_bit_loss 1e-5 --lambda_distillation_loss 0.01 --lambda_regularization 0.01`
 
 ADAM optimization is used.
 
@@ -35,14 +37,14 @@ bit_loss 130.15
 ('hp_cross_entropy', 'dense_2') 0.08
 regularization_term 202.27
 ```
-The results are located in `./lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01`
+The results are located in `./train_dir/lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01`
 which will be created during the run. Main directories there:
 * `training_model_final` - contains the final trained HP model
 * `int_model_final`      - contains the final trained LP model
 
 These two models can be further taken through the leip pipeline and the evaluations and the compilations scripts, explained next.
 
-For the sequel perform `cd lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01`
+For the next steps, run `cd train_dir/lenet_on_mnist_adam_weight_decay_0.0002_lam_bl_1e-05_lam_dl_0.01`
 
 # Compile
 
@@ -74,19 +76,20 @@ leip compress --input_path int_model_final/ --bits 5 --output_path LPcompressed
 ```
 
 # Evaluation of the models
-The script `create_data.py` creates data for evaluation. The data is already created in the folder 
+The MNIST dataset needs to be reformatted for eval, the script `create_data.py does this. The data is already created in this folder, so you don't need to reformat the data yourself.
 `mnist_examples`.
+
 
 Checking the compressed models for HPcompressed:
 ```
-leip evaluate --framework tf2 --input_path ./HPcompressed/model_save/ --test_path ../mnist_examples/index.txt --class_names ../mnist_examples/class_names.txt --task=classifier --dataset=custom --input_names Placeholder --output_names Softmax --input_shapes 1,28,28
+leip evaluate --framework tf2 --input_path ./HPcompressed/model_save/ --test_path ../../mnist_examples/index.txt --class_names ../../mnist_examples/class_names.txt --task=classifier --dataset=custom --input_names Placeholder --output_names Softmax --input_shapes 1,28,28 --preprocessor rgbtogray
 ```
 Now it is possible to check that each one of the earlier created models works. Instead of the directory
 `HPcompressed/model_save/` insert `LPcompressed/model_save/`, `training_model_final/` or `int_model_final/`.
 
 We can also check that the compiled models work as follows (notice the change in framework `tf2->tvm` and the input_path directory):
 ```
-leip evaluate --framework tvm --input_path ./HPcompiled/ --test_path ../mnist_examples/index.txt --class_names ../mnist_examples/class_names.txt --task=classifier --dataset=custom --input_names Placeholder --output_names Softmax --input_shapes 1,28,28
+leip evaluate --framework tvm --input_path ./HPcompiled/ --test_path ../../mnist_examples/index.txt --class_names ../../mnist_examples/class_names.txt --task=classifier --dataset=custom --input_names Placeholder --output_names Softmax --input_shapes 1,28,28 --preprocessor rgbtogray
 ```
 or with `LPcompiled` instead of `HPcompiled`.
 

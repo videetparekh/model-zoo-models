@@ -4,15 +4,15 @@ prepared with LEIP framework.
 """
 
 import tensorflow.compat.v1 as tf
+from leip.compress.training.gtc.activation import Activation as gtcActivation
+from leip.compress.training.gtc.conv2d import Conv2d as gtcConv2d
+from leip.compress.training.gtc.dense import Dense as gtcDense
+from leip.compress.training.gtc.flatten import Flatten as gtcFlatten
+from leip.compress.training.gtc.pooling import MaxPooling2D as gtcMaxPooling2D
 from leip.compress.training.gtcModel import GTCModel
 from leip.compress.training.quantization import GTCQuantization
-from leip.compress.training.gtc.conv2d import Conv2d as gtcConv2d
-from leip.compress.training.gtc.activation import Activation as gtcActivation
 from leip.compress.training.quantization import IdentityQuantization
-from leip.compress.training.gtc.pooling import MaxPooling2D as gtcMaxPooling2D
-from leip.compress.training.gtc.flatten import Flatten as gtcFlatten
-from leip.compress.training.gtc.dense import Dense as gtcDense
-from leip.compress.training.gtc.dropout import Dropout as gtcDropout
+
 
 # create LeNet model using keras Sequential
 def L1(args, x_placeholder):
